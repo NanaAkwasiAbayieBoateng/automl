@@ -1,0 +1,14 @@
+image: continuumio/miniconda3
+
+before_script:
+    - conda env create -f ./environment.yml
+    - source activate automl
+
+stages:
+    - test
+
+job:
+    stage: test
+    script:
+        - PYTHONPATH=./python pytest -v -l
+
