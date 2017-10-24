@@ -2,7 +2,9 @@
 
 import logging
 from urllib.parse import urlparse
+
 import pandas as pd
+
 
 class DatasetLoader:
     """Data loading for common formats"""
@@ -17,7 +19,7 @@ class DatasetLoader:
         """Load resource of supported type.
 
         You can use pandas options for most formats:
-        >>> dataset_loader("csv:///data.csv", delimeter=";")
+        >>> default_dataset_loader("csv:///data.csv", delimeter=";")
 
         
         Parameters
@@ -54,6 +56,9 @@ class DatasetLoader:
         loader_func: callable
             callable that performs data loading
         """
+        if not callable(loader_func):
+            raise ValueError("loader_func must be callable")
         self._loader_map[format_name] = loader_func
+
 
 default_dataset_loader = DatasetLoader()
