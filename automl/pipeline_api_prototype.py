@@ -1,3 +1,11 @@
+
+# =======================================================
+# | WARNING                                             |   
+# | This is not a runnable script, but just an example  |   
+# | of how the AutoML pipeline                          |  
+# | should look like after development is finished.     |  
+# ======================================================= 
+
 from automl.pipeline import Pipeline, Combine, RandomChoice
 from automl.model import ModelZoo
 
@@ -15,10 +23,11 @@ hyperparameter_optimizer = HyperparameterOptimizer(model_zoo, algorithm='hyperop
 
 # Create AutoML Pipeline
 automl_pipeline = Pipeline([
-            dataset_loader('csv:///path/to/file.csv', cache=True),
-            RandomChoice([ArithmeticFeatureGenerator(), PolynomialFeatureGenerator()]),
-            hyperparameter_optimizer,
-            model_space
+            ('load data', dataset_loader('csv:///path/to/file.csv', cache=True)),
+            ('select best features', KTopFeatureFilter(k=10, each=3)),
+            ('generate features', RandomChoice([ArithmeticFeatureGenerator(), PolynomialFeatureGenerator()])_,
+            ('optimize params', hyperparameter_optimizer),
+            ('search for best models', model_space)
            ])
 
 # Also possible
