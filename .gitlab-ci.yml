@@ -10,5 +10,5 @@ stages:
 job:
     stage: test
     script:
-        - PYTHONPATH=./python pytest -v -l
+        - pytest -v -l --cov
 

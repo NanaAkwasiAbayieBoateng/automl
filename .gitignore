@@ -3,3 +3,4 @@ __pycache__
 *.swp
 __cache__
 .cache
+.coverage

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from dataset.loader import default_dataset_loader as loader
+from automl.dataset.loader import default_dataset_loader as loader
 
 
 class TestDataLoader(unittest.TestCase):
