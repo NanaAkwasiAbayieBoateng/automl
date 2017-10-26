@@ -7,7 +7,9 @@ from sklearn.preprocessing import PolynomialFeatures
 
 
 class FeatureGeneratorBase(ABC):
-    """Base class for all feature generators"""
+    """DEPRECATED, to be deleted
+    
+    Base class for all feature generators"""
     def __init__(self):
         self._log = logging.getLogger(self.__class__.__name__)
 
@@ -19,27 +21,34 @@ class FeatureGeneratorBase(ABC):
         pass
 
 
-class PolynomialFeatureGenerator(FeatureGeneratorBase):
-    """Class for polynomial features generators"""
-    def __init__(self):
+class PolynomialFeatureGenerator:
+    def __init__(self, **kwargs):
+        """
+        Initialize Polynomial Feature Generator
+
+        Parameters
+        ----------
+        kwargs:
+            keyword arguments are passed to sklearn PolynomialFeatures
+
+        See Also
+        --------
+        http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
+        """
         super().__init__()
-    
-    def generate_features(self, X, **kwargs):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self._polynomial_features = PolynomialFeatures(**kwargs)
+
+    def __call__(self, X, pipeline_context):
         """
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             The data.
-        degree : integer
-            The degree of the polynomial features. Default = 2.
-        interaction_only : boolean, default = False
-            If true, only interaction features are produced: features that are
-            products of at most ``degree`` *distinct* input features (so not
-            ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
-        include_bias : boolean
-            If True (default), then include a bias column, the feature in which
-            all polynomial powers are zero (i.e. a column of ones - acts as an
-            intercept term in a linear model).
+
+        pipeline_context: automl.pipeline.PipelineContext
+            global context of a pipeline
+        
         Returns
         -------
         X_new : numpy array of shape [n_samples, n_features_new]
@@ -49,13 +58,10 @@ class PolynomialFeatureGenerator(FeatureGeneratorBase):
         --------
         http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
         """
-        return PolynomialFeatures(**kwargs).fit_transform(X)
-
-    def __call__(self, X, **kwargs):
-        self.generate_features(X, **kwargs)
+        return self._polynomial_features.fit_transform(X)
 
 
-class ArithmeticFeatureGenerator(FeatureGeneratorBase):
+class FormulaFeatureGenerator(FeatureGeneratorBase):
     """TODO Doc"""
-    def __init__(self):
+    def __init__(self, func_list=['+', '-']):
         raise NotImplementedError()
