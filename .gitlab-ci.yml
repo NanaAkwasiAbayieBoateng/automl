@@ -10,5 +10,5 @@ stages:
 job:
     stage: test
     script:
-        - pytest -v -l --cov=automl
+        - PYTHONPATH=. pytest -v -l --cov=automl
 
