@@ -53,7 +53,7 @@ class LocalExecutor:
     >>> LocalExecutor(epochs=10) << pipeline
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Parameters
         ----------
@@ -63,10 +63,11 @@ class LocalExecutor:
         """
         self._log = logging.getLogger(self.__class__.__name__)
         self._context = PipelineContext()
+        self._args = args
         self._kwargs = kwargs
 
     def __lshift__(self, other):
-        return self.run(other, **self._kwargs)
+        return self.run(other, *self._args, **self._kwargs)
 
     def run(self, pipeline, input_data=None, epochs=1):
         """Run pipeline.
