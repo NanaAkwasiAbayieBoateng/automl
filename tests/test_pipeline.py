@@ -33,3 +33,13 @@ class TestPipeline(unittest.TestCase):
                                       PipelineStep('generate_features', poly))
 
         self.assertEqual(result[1].shape, (2, 4))
+
+    def test_initializer(self):
+        func = lambda x, context: context.epoch
+        result = LocalExecutor(epochs=10) << (Pipeline() 
+                                              >> PipelineStep('a',
+                                                              func,
+                                                              initializer=True))
+
+        self.assertEqual(result[1], 0)
+
