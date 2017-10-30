@@ -1,25 +1,32 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, Mock
 import numpy as np
-from sklearn.preprocessing import PolynomialFeatures
 
-from automl.feature.generators import PolynomialFeatureGenerator
+from automl.feature.generators import SklearnFeatureGenerator
 from automl.pipeline import PipelineContext
 
+class TestSklearnFeatureGenerator(unittest.TestCase):
+    def test_call_generator(self):
+        Transformer = Mock()
+        Transformer.fit_transform.return_value = []
 
-class TestPolynomialFeatureGenerator(unittest.TestCase):
-    @patch('sklearn.preprocessing.PolynomialFeatures.fit_transform')
-    def test_call_generator(self, fit_transform_mock):
-        X = [[1,2],[3,4]]
+        X = [[1, 2], [3, 4]]
         context = PipelineContext()
-        generator = PolynomialFeatureGenerator()
-        generator(X, context)
-        fit_transform_mock.assert_called_with(X)
 
-    @patch('automl.feature.generators.PolynomialFeatures')
-    def test_generate_features_kwargs(self, features_mock):
+        transformer = lambda *args, **kwargs: Transformer
+        gen = SklearnFeatureGenerator(transformer)
+        gen(X, context)
+        Transformer.fit_transform.assert_called_with(X)
+
+    def test_generate_features_kwargs(self):
+        Transformer = Mock()
+
         kwargs = {
             'degree': 3
         }
-        generator = PolynomialFeatureGenerator(**kwargs)
-        features_mock.assert_called_with(**kwargs)
+        
+        transformer = lambda *args, **kwargs: Transformer(*args, **kwargs)
+        gen = SklearnFeatureGenerator(transformer, **kwargs)
+        Transformer.assert_called_with(**kwargs)
+
+

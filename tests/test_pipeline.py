@@ -1,11 +1,11 @@
 import unittest
+import sklearn
 
 from automl.pipeline import PipelineStep, Pipeline, LocalExecutor
 from automl.combinators import RandomChoice
-from automl.feature.generators import PolynomialFeatureGenerator
+from automl.feature.generators import PolynomialGenerator
 
 from sklearn.preprocessing import PolynomialFeatures
-
 class TestPipeline(unittest.TestCase):
     def test_pipeline_step(self):
         pipeline = Pipeline() >> PipelineStep('a', lambda x, context: x + 1) \
@@ -26,7 +26,10 @@ class TestPipeline(unittest.TestCase):
             self.assertIn(result[1], [1, 2])
 
     def test_pipeline(self):
-        X = [[1,2],[3,4]]
-        result = LocalExecutor(X) <<( Pipeline() >> PipelineStep('generate_features', 
-            PolynomialFeatureGenerator(interaction_only=True, degree=4)))
-        self.assertTrue((result[1]==PolynomialFeatures(degree=4, interaction_only=True).fit_transform(X)).all())
+        X = [[1, 2], [3, 4]]
+
+        poly = PolynomialGenerator(interaction_only=True, degree=4)
+        result = LocalExecutor(X) << (Pipeline() >> 
+                                      PipelineStep('generate_features', poly))
+
+        self.assertEqual(result[1].shape, (2, 4))
