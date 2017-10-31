@@ -42,7 +42,7 @@ class SklearnFeatureGenerator:
 
 
 class FormulaFeatureGenerator:
-    def __init__(self, func_list):
+    def __init__(self, func_list=['+', '-', '*', '/']):
         """
         Initialize Formula Feature Generator
 
