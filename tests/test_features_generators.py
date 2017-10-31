@@ -32,7 +32,7 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
 
     def test_generate_formula_feature(self):
         a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        gen = FormulaFeatureGenerator()
+        gen = FormulaFeatureGenerator(['+', '*', '/', '-'])
         limit = random.randint(0, 100)
         context = PipelineContext()
         self.assertEqual(

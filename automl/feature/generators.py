@@ -42,15 +42,23 @@ class SklearnFeatureGenerator:
 
 
 class FormulaFeatureGenerator:
-    def __init__(self):
+    def __init__(self, func_list):
         """
         Initialize Formula Feature Generator
+
+        Paramets
+        --------
+        func_list : list of symbols of functions
+            In current version func_list may contain only '+', '-', '*', '/'.
 
         Attributes
         ----------
         _func_map : dict of generating functions
             The function for generation new features
+
+        used_func : set of of symbols of functions
         """
+        self.used_func = set(func_list)
         self._func_map = {
             '+': self._sum,
             '-': self._substract,
@@ -163,7 +171,7 @@ class FormulaFeatureGenerator:
         if not isinstance(X, np.ndarray):
             X = np.array(X)
         for _ in range(0, limit):
-            X = self._func_map[random.choice(list(self._func_map))](X)
+            X = self._func_map[random.sample(self.used_func, 1)[0]](X)
         return X
 
 
