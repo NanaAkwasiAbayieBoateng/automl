@@ -160,10 +160,9 @@ class FormulaFeatureGenerator:
         XF : numpy array of shape [n_samples, n_features+limit]
             Transformed array.
         """
-        if X.isinstance(np.ndarray):
+        if not isinstance(X, np.ndarray):
             X = np.array(X)
-        print(type(X))
-        for i in range(0, limit):
+        for _ in range(0, limit):
             X = self._func_map[random.choice(list(self._func_map))](X)
         return X
 
