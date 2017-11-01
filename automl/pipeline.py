@@ -56,6 +56,13 @@ class Pipeline:
             self.steps = []
     
     def __rshift__(self, other):
+        if not isinstance(other, PipelineStep):
+            if callable(other):
+                other = PipelineStep(other.__class__.__name__, other)
+            else:
+                raise ValueError(("Non-callable step passted to the pipeline."
+                                 f"Step {other} must be callable"))
+
         self.steps.append(other)
         return self
 
