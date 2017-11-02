@@ -35,9 +35,11 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         Transformer.assert_called_with(**kwargs)
 
     def test_generate_formula_feature(self):
-        a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        features = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        df = pd.DataFrame(features)
+        X = Dataset(df, None)
         gen = FormulaFeatureGenerator(['+', '*', '/', '-'])
         limit = random.randint(0, 100)
         context = PipelineContext()
         self.assertEqual(
-            np.array(a).shape[1] + limit, gen(a, limit, context).shape[1])
+            np.array(features).shape[1] + limit, gen(X, limit, context).data.shape[1])

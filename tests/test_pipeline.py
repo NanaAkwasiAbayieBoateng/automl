@@ -1,9 +1,11 @@
 import unittest
 import sklearn
+import pandas as pd
 
 from automl.pipeline import PipelineStep, Pipeline, LocalExecutor
 from automl.combinators import RandomChoice
 from automl.feature.generators import PolynomialGenerator
+from automl.data.dataset import Dataset
 
 from sklearn.preprocessing import PolynomialFeatures
 
@@ -27,13 +29,13 @@ class TestPipeline(unittest.TestCase):
             self.assertIn(result[1], [1, 2])
 
     def test_pipeline(self):
-        X = [[1, 2], [3, 4]]
-
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        X = Dataset(df, None)
         poly = PolynomialGenerator(interaction_only=True, degree=4)
         result = LocalExecutor(X) << (Pipeline() >> 
                                       PipelineStep('generate_features', poly))
 
-        self.assertEqual(result[1].shape, (2, 4))
+        self.assertEqual(result[1].data.shape, (2, 4))
 
     def test_initializer(self):
         func = lambda x, context: context.epoch
@@ -41,7 +43,6 @@ class TestPipeline(unittest.TestCase):
                                               >> PipelineStep('a',
                                                               func,
                                                               initializer=True))
-
         self.assertEqual(result[1], 0)
 
     def test_auto_step_wrapper(self):
