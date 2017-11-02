@@ -1,10 +1,6 @@
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn import datasets 
+import multiprocessing
+import operator
+import numpy as np
 
 
 class ModelSpace:
@@ -16,46 +12,50 @@ class ModelSpace:
     RandomForest
     Gradient Boosting
     """
-    def __init__(self, model_list, random_subset=None):
-        self.available_model = {
-            'RFC' : RandomForestClassifier(),
-            'GBC': GradientBoostingClassifier(),
-            'LR': LogisticRegression(),
-            'SVC': SVC(),
-            'KNC': KNeighborsClassifier()
-        }
-        self.model_list = [self.available_model[model] for model in model_list]
-        self.random_subset=random_subset
+    def __init__(self, model_list):
+        self._model_list = model_list
+
+    def __call__(self, x, context):
+        context.model_space = self._model_list
 
 class CV:
-    def __init__(self, X, y):
-        self.X = X
-        self.y = y
+    def __init__(self, n_folds=5, n_jobs=None):
+        self._n_folds = n_folds
 
-    def __lshift__(self, other):
-        score = []
-        for model in other.model_list:
-            score.append(cross_val_score(model, self.X, self.y).mean())
-        score.sort()
-        return score
+        if n_jobs is None:
+            self._n_jobs = multiprocessing.cpu_count()
+        else:
+            self._n_jobs = n_jobs
+
+    def __call__(self, dataset, context):
+        cv_results = [] 
+        
+        for model in context.model_space:
+            model_name = model.__class__.__name__
+            cv_scores = cross_val_score(
+                   model,
+                   dataset.x,
+                   dataset.y,
+                   cv=self._n_folds,
+                   n_jobs=self._n_jobs)
+
+            cv_results.append(model, np.mean(cv_scores))
+
+        return cv_results
+
 
 class Validate:
     def __init__(self):
         pass
-    
-    def __lshift__(self, other):
+
+    def __call__(self, dataset, context):
         pass
 
+
 class ChooseBest:
-    def __init__(self, amount):
-        self.amount=amount
-    
-    def __lshift__(self, other):
-        return other[-self.amount:]
-        
-iris = datasets.load_iris()
+    def __init__(self, k):
+        self._k = k
 
-X = iris.data
-y = iris.target
-
-print(ChooseBest(4) << (CV(X, y) << ModelSpace(['RFC', 'LR', 'SVC', 'KNC'])))
+    def __call__(self, model_scores, context):
+        sorted_scores = sorted(model_scores, key=operator.itemgetter(0))
+        return sorted_scores[:self._k]
