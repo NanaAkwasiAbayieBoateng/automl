@@ -2,6 +2,7 @@ import multiprocessing
 import operator
 import numpy as np
 
+from sklearn.cross_validation import cross_val_score
 
 class ModelSpace:
     """
@@ -31,15 +32,14 @@ class CV:
         cv_results = [] 
         
         for model in context.model_space:
-            model_name = model.__class__.__name__
             cv_scores = cross_val_score(
                    model,
-                   dataset.x,
-                   dataset.y,
+                   dataset.data,
+                   dataset.target,
                    cv=self._n_folds,
                    n_jobs=self._n_jobs)
 
-            cv_results.append(model, np.mean(cv_scores))
+            cv_results.append((model, np.mean(cv_scores)))
 
         return cv_results
 
@@ -57,5 +57,5 @@ class ChooseBest:
         self._k = k
 
     def __call__(self, model_scores, context):
-        sorted_scores = sorted(model_scores, key=operator.itemgetter(0))
+        sorted_scores = sorted(model_scores, key=operator.itemgetter(1))
         return sorted_scores[:self._k]
