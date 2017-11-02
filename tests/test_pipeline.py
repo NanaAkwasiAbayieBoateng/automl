@@ -6,6 +6,7 @@ from automl.combinators import RandomChoice
 from automl.feature.generators import PolynomialGenerator
 
 from sklearn.preprocessing import PolynomialFeatures
+
 class TestPipeline(unittest.TestCase):
     def test_pipeline_step(self):
         pipeline = Pipeline() >> PipelineStep('a', lambda x, context: x + 1) \
@@ -43,3 +44,11 @@ class TestPipeline(unittest.TestCase):
 
         self.assertEqual(result[1], 0)
 
+    def test_auto_step_wrapper(self):
+        func = lambda x, context: 1
+        result = LocalExecutor() << (Pipeline() >> func)
+        self.assertEqual(result[1], 1)
+
+    def test_auto_step_wrapper_error(self):
+        with self.assertRaises(ValueError):
+            LocalExecutor() << (Pipeline() >> "err")
