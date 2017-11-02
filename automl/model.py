@@ -3,6 +3,7 @@ import operator
 import numpy as np
 
 from sklearn.cross_validation import cross_val_score
+from sklearn.cross_validation import train_test_split
 
 class ModelSpace:
     """
@@ -16,8 +17,9 @@ class ModelSpace:
     def __init__(self, model_list):
         self._model_list = model_list
 
-    def __call__(self, x, context):
+    def __call__(self, dataset, context):
         context.model_space = self._model_list
+        return dataset
 
 class CV:
     def __init__(self, n_folds=5, n_jobs=None):
@@ -45,11 +47,15 @@ class CV:
 
 
 class Validate:
-    def __init__(self):
-        pass
+    def __init__(self, test_size):
+        self._test_size = test_size
 
     def __call__(self, dataset, context):
-        pass
+        return train_test_split(
+            dataset.data, 
+            dataset.target, 
+            test_size=self._test_size, 
+            random_state=42)
 
 
 class ChooseBest:
