@@ -4,8 +4,10 @@ import random
 
 from automl.feature.generators import SklearnFeatureGenerator, FormulaFeatureGenerator
 from automl.pipeline import PipelineContext
+from automl.data.dataset import Dataset
 
 import numpy as np
+import pandas as pd
 
 
 class TestSklearnFeatureGenerator(unittest.TestCase):
@@ -13,13 +15,15 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         Transformer = Mock()
         Transformer.fit_transform.return_value = []
 
-        X = [[1, 2], [3, 4]]
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        X = Dataset(df, None)
         context = PipelineContext()
 
         transformer = lambda *args, **kwargs: Transformer
         gen = SklearnFeatureGenerator(transformer)
         gen(X, context)
-        Transformer.fit_transform.assert_called_with(X)
+        Transformer.fit_transform.assert_called()
+        self.assertTrue(Transformer.fit_transform.call_args[0][0].equals(df))
 
     def test_generate_polynomial_features_kwargs(self):
         Transformer = Mock()
