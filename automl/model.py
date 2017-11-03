@@ -4,6 +4,7 @@ import numpy as np
 
 from sklearn.cross_validation import cross_val_score
 from sklearn.cross_validation import train_test_split
+from hyperopt import STATUS_OK
 
 class ModelSpace:
     """
@@ -22,7 +23,7 @@ class ModelSpace:
         return dataset
 
 class CV:
-    def __init__(self, n_folds=5, n_jobs=None):
+    def __init__(self, n_folds=5, n_jobs=None, hyperopt_eval_format=False):
         self._n_folds = n_folds
 
         if n_jobs is None:
@@ -30,20 +31,41 @@ class CV:
         else:
             self._n_jobs = n_jobs
 
-    def __call__(self, dataset, context):
+        self._hyperopt = hyperopt_eval_format
+
+    def __call__(self, dataset, context, model_params=None):
         cv_results = [] 
-        
-        for model in context.model_space:
-            cv_scores = cross_val_score(
+       
+        # TODO hyperopt won't work with multiple models
+        # We should probabily leave CV evaluate single model and
+        # create a step like EvaluateAllModels
+        if self._hyperopt:
+            if len(context.model_space) > 1:
+                raise ValueError("Multiple models are not supported by Hyperopt yet")
+            model = context.model_space[0]
+
+            if model_params is not None:
+                model = model(**model_params) # ugly
+            cv_score = cross_val_score(
                    model,
                    dataset.data,
                    dataset.target,
                    cv=self._n_folds,
                    n_jobs=self._n_jobs)
+            return {'loss': np.mean(cv_score), 'status': STATUS_OK}
+        else:
+            for model in context.model_space:
 
-            cv_results.append((model, np.mean(cv_scores)))
+                cv_scores = cross_val_score(
+                       model,
+                       dataset.data,
+                       dataset.target,
+                       cv=self._n_folds,
+                       n_jobs=self._n_jobs)
 
-        return cv_results
+                cv_results.append((model, np.mean(cv_scores)))
+
+            return cv_results
 
 
 class Validate:

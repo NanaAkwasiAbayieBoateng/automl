@@ -9,5 +9,7 @@ dependencies:
 - pytest-cov=2.5.1
 - scikit-learn=0.19.1
 - tqdm
+- hyperopt
+- networkx=1.11 # hyperopt dependency
 prefix: /Users/kdubovikov/miniconda3/envs/automl
 
