@@ -23,7 +23,6 @@ class TestSearchPipeline(unittest.TestCase):
         return Dataset(datasets.load_iris().data, datasets.load_iris().target)
 
     def test_validate(self):
-        
         model_list = [
             LogisticRegression(),
             RandomForestClassifier(n_estimators=100),
@@ -32,10 +31,9 @@ class TestSearchPipeline(unittest.TestCase):
             KNeighborsClassifier(),
         ]
         print('='*30)
-        print(LocalExecutor() << (Pipeline() >> PipelineStep('data', Data()) \
-                                    >> PipelineStep('model_space', ModelSpace(model_list)) \
-                                    >> PipelineStep('validation', Validate(test_size=0.33)))
-        )
+        print(LocalExecutor() << (Pipeline() >> Data()
+                                    >> ModelSpace(model_list)
+                                    >> Validate(test_size=0.33)))
 
     def test_cv(self):
         pass
