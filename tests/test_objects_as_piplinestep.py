@@ -1,7 +1,7 @@
 import unittest
 from automl.pipeline import LocalExecutor, Pipeline, PipelineStep
 from automl.data.dataset import Dataset
-from automl.model import ModelSpace, Validate
+from automl.model import ModelSpace, Validate, CV, ChooseBest
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression
@@ -9,6 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
 
 class Data:
     def __init__(self):
@@ -30,10 +31,10 @@ class TestSearchPipeline(unittest.TestCase):
             SVC(),
             KNeighborsClassifier(),
         ]
-        print('='*30)
-        print(LocalExecutor() << (Pipeline() >> Data()
+        LocalExecutor() << (Pipeline() >> Data()
                                     >> ModelSpace(model_list)
-                                    >> Validate(test_size=0.33)))
+                                    >> Validate(test_size=0.33, metrics=accuracy_score)
+                                    >> ChooseBest(3))
 
     def test_cv(self):
         pass
