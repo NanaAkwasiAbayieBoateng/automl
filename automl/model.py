@@ -30,6 +30,11 @@ class ModelSpace:
 
         context : PiplineContext
             Global context of pipeline
+
+        Returns
+        -------
+        dataset : Dataset
+            Unchanged dataset is passed to next step in pipeline
         """
         context.model_space = self._model_list
         return dataset
@@ -69,6 +74,14 @@ class CV:
 
         context : PiplineContext
             Global context of pipeline
+
+        Returns
+        -------
+        dataset : Dataset
+            Unchanged dataset is passed to next step in pipeline
+
+        cv_results : list of tuples
+            Tuples like (model, score)
         """
         cv_results = []
 
@@ -116,19 +129,27 @@ class Validate:
 
         context : PiplineContext
             Global context of pipeline
+
+        Returns
+        -------
+        dataset : Dataset
+            Unchanged dataset is passed to next step in pipeline
+
+        validation_results : list of tuples
+            Tuples like (model, score)
         """
         X_train, X_test, y_train, y_test = train_test_split(
             dataset.data,
             dataset.target,
             test_size=self._test_size,
             random_state=42)
-        validate_results = []
+        validation_results = []
 
         for model in context.model_space:
             model.fit(X_train, y_train)
-            validate_results.append((model, self._metrics(
+            validation_results.append((model, self._metrics(
                 model.predict(X_test), y_test)))
-        return dataset, validate_results
+        return dataset, validation_results
 
 
 class ChooseBest:
@@ -141,7 +162,7 @@ class ChooseBest:
         Parametrs
         ---------
         k : int
-            number of models for choice
+            Number of models for choice
         """
         self._k = k
 
@@ -153,10 +174,18 @@ class ChooseBest:
             Processed dataset
 
         model_scorer : list of tuples
-            tuples like (model, score)
+            Tuples like (model, score)
 
         context : PiplineContext
             Global context of pipeline
+
+        Returns
+        -------
+        dataset : Dataset
+            Unchanged dataset is passed to next step in pipeline
+
+        sorted_scores : list of tuples 
+            Only the top self._k tuples like (model, score) with the best score
         """
         dataset = pipe_input[0]
         model_scores = pipe_input[1]
