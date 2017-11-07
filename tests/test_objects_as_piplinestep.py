@@ -21,9 +21,6 @@ class Data:
 
 
 class TestSearchPipeline(unittest.TestCase):
-    def data_load(self, pipe_input, context):
-        return Dataset(datasets.load_iris().data, datasets.load_iris().target)
-
     def test_step_validate(self):
         model_list = [
             LogisticRegression(),
@@ -32,11 +29,28 @@ class TestSearchPipeline(unittest.TestCase):
             SVC(),
             KNeighborsClassifier(),
         ]
-        LocalExecutor(
-        ) << (Pipeline() >> PipelineStep('data', Data()) >> PipelineStep(
-            'model space', ModelSpace(model_list)) >> PipelineStep(
-                'validation', Validate(test_size=0.33, metrics=accuracy_score))
-              >> PipelineStep('choose', ChooseBest(3)))
+        try:
+            LocalExecutor() << (Pipeline() >>
+                PipelineStep('data', Data()) >>
+                PipelineStep('model space', ModelSpace(model_list)) >>
+                PipelineStep('validation', Validate(test_size=0.33, metrics=accuracy_score)) >>
+                PipelineStep('choose', ChooseBest(3)))
+        except:
+            self.fail("LocalExecutor failed unexpectedly!")
 
     def test_step_cv(self):
-        pass
+        model_list = [
+            LogisticRegression(),
+            RandomForestClassifier(n_estimators=100),
+            GradientBoostingClassifier(),
+            SVC(),
+            KNeighborsClassifier(),
+        ]
+        try:
+            LocalExecutor() << (Pipeline() >> 
+                PipelineStep('data', Data()) >>
+                PipelineStep('model space', ModelSpace(model_list)) >>
+                PipelineStep('cv', CV()) >>
+                PipelineStep('choose', ChooseBest(3)))
+        except:
+            self.fail("LocalExecutor failed unexpectedly!")
