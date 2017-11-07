@@ -11,19 +11,20 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
+
 class Data:
     def __init__(self):
         pass
 
     def __call__(self, pipe_input, context):
         return Dataset(datasets.load_iris().data, datasets.load_iris().target)
-    
+
 
 class TestSearchPipeline(unittest.TestCase):
     def data_load(self, pipe_input, context):
         return Dataset(datasets.load_iris().data, datasets.load_iris().target)
 
-    def test_validate(self):
+    def test_step_validate(self):
         model_list = [
             LogisticRegression(),
             RandomForestClassifier(n_estimators=100),
@@ -31,10 +32,11 @@ class TestSearchPipeline(unittest.TestCase):
             SVC(),
             KNeighborsClassifier(),
         ]
-        LocalExecutor() << (Pipeline() >> Data()
-                                    >> ModelSpace(model_list)
-                                    >> Validate(test_size=0.33, metrics=accuracy_score)
-                                    >> ChooseBest(3))
+        LocalExecutor(
+        ) << (Pipeline() >> PipelineStep('data', Data()) >> PipelineStep(
+            'model space', ModelSpace(model_list)) >> PipelineStep(
+                'validation', Validate(test_size=0.33, metrics=accuracy_score))
+              >> PipelineStep('choose', ChooseBest(3)))
 
-    def test_cv(self):
+    def test_step_cv(self):
         pass

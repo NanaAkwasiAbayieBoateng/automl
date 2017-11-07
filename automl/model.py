@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.cross_validation import cross_val_score
 from sklearn.cross_validation import train_test_split
 
+
 class ModelSpace:
     """
     Class contains predefined models with given hyperparameters
@@ -14,6 +15,7 @@ class ModelSpace:
     model_list : list
         List of models
     """
+
     def __init__(self, model_list):
         self._model_list = model_list
 
@@ -25,17 +27,19 @@ class ModelSpace:
         ---------
         dataset : Dataset
             Processed dataset
-        
+
         context : PiplineContext
             Global context of pipeline
         """
         context.model_space = self._model_list
         return dataset
 
+
 class CV:
     """
     Class for cross-validation step in pipeline
     """
+
     def __init__(self, n_folds=5, n_jobs=None):
         """
         Parameters
@@ -56,46 +60,105 @@ class CV:
 
     def __call__(self, dataset, context):
         """
-        
+        Execute cross-validation for all model in model_space.
+
+        Parametrs
+        ---------
+        dataset : Dataset
+            Processed dataset
+
+        context : PiplineContext
+            Global context of pipeline
         """
-        cv_results = [] 
-        
+        cv_results = []
+
         for model in context.model_space:
             cv_scores = cross_val_score(
-                   model,
-                   dataset.data,
-                   dataset.target,
-                   cv=self._n_folds,
-                   n_jobs=self._n_jobs)
+                model,
+                dataset.data,
+                dataset.target,
+                cv=self._n_folds,
+                n_jobs=self._n_jobs)
 
             cv_results.append((model, np.mean(cv_scores)))
 
-        return cv_results
+        return dataset, cv_results
 
 
 class Validate:
+    """
+    Class for validation step in pipeline with using user metrics
+    """
+
     def __init__(self, test_size, metrics):
+        """
+        Parametrs
+        ---------
+        test_size : float, int
+            If float, should be between 0.0 and 1.0 and represent the
+            proportion of the dataset to include in the test split.
+            If int, represents the absolute number of test samples.
+
+        metrics : callable
+            Should get predicted and test vector for calculating metrics score
+        """
         self._test_size = test_size
         self._metrics = metrics
 
     def __call__(self, dataset, context):
+        """
+        Executes validation for all model in model_space.
+
+        Parametrs
+        ---------
+        dataset : Dataset
+            Processed dataset
+
+        context : PiplineContext
+            Global context of pipeline
+        """
         X_train, X_test, y_train, y_test = train_test_split(
-            dataset.data, 
-            dataset.target, 
-            test_size=self._test_size, 
+            dataset.data,
+            dataset.target,
+            test_size=self._test_size,
             random_state=42)
         validate_results = []
 
         for model in context.model_space:
             model.fit(X_train, y_train)
-            validate_results.append((model, self._metrics(model.predict(X_test), y_test)))
-        return validate_results
+            validate_results.append((model, self._metrics(
+                model.predict(X_test), y_test)))
+        return dataset, validate_results
 
 
 class ChooseBest:
+    """
+    Chooses best model by scores on CV or Validation step in pipeline
+    """
+
     def __init__(self, k):
+        """
+        Parametrs
+        ---------
+        k : int
+            number of models for choice
+        """
         self._k = k
 
-    def __call__(self, model_scores, context):
+    def __call__(self, pipe_input, context):
+        """
+        Parametrs
+        ---------
+        dataset : Dataset
+            Processed dataset
+
+        model_scorer : list of tuples
+            tuples like (model, score)
+
+        context : PiplineContext
+            Global context of pipeline
+        """
+        dataset = pipe_input[0]
+        model_scores = pipe_input[1]
         sorted_scores = sorted(model_scores, key=operator.itemgetter(1))
-        return sorted_scores[:self._k]
+        return dataset, sorted_scores[:self._k]
