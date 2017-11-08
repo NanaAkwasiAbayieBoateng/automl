@@ -11,4 +11,4 @@ dependencies:
 - tqdm
 - pip:
     - hyperopt==0.1
-
+    - networkx==1.11
