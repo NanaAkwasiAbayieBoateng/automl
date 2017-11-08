@@ -4,12 +4,13 @@ from automl.data.dataset import Dataset
 from automl.model import ModelSpace, Validate, CV, ChooseBest
 
 from sklearn import datasets
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Lasso, Ridge
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.metrics import accuracy_score, mean_absolute_error
 
 
 class TestSearchPipeline(unittest.TestCase):
@@ -42,3 +43,17 @@ class TestSearchPipeline(unittest.TestCase):
             PipelineStep('model space', ModelSpace(model_list)) >>
             PipelineStep('cv', CV()) >>
             PipelineStep('choose', ChooseBest(3)))
+
+    def test_step_space_regression_model(self):
+        model_list = [
+            (Lasso, {}),
+            (Ridge, {}),
+            (KernelRidge, {}),
+        ]
+
+        data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
+        LocalExecutor(data) << (Pipeline() >> 
+            PipelineStep('model space', ModelSpace(model_list)) >>
+            PipelineStep('cv', Validate(test_size=0.33, metrics=mean_absolute_error)) >>
+            PipelineStep('choose', ChooseBest(3)))
+
