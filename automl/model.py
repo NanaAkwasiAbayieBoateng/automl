@@ -4,7 +4,8 @@ import numpy as np
 
 from sklearn.cross_validation import cross_val_score
 from sklearn.cross_validation import train_test_split
-from hyperopt import STATUS_OK
+
+from automl.pipeline import ModelSpaceFunctor
 
 
 class ModelSpace:
@@ -13,8 +14,9 @@ class ModelSpace:
 
     Parameters
     ----------
-    model_list : list
-        List of models
+    model_list : list of tuples
+        each element must be a tuple where the first element is an estimator
+        and the second one is estimator parameter kwargs dict 
     """
 
     def __init__(self, model_list):
@@ -41,11 +43,11 @@ class ModelSpace:
         return dataset
 
 
-class CV:
+class CV(ModelSpaceFunctor):
     """
     Class for cross-validation step in pipeline
     """
-
+    def __init__(self, n_folds=3, n_jobs=None):
         self._n_folds = n_folds
 
         if n_jobs is None:
@@ -53,44 +55,28 @@ class CV:
         else:
             self._n_jobs = n_jobs
 
-        self._hyperopt = hyperopt_eval_format
+    def __call__(self, dataset, context, hparams=None):
+        model, model_params = context 
 
-    def __call__(self, dataset, context, model_params=None):
-        cv_results = [] 
-       
-        # TODO hyperopt won't work with multiple models
-        # We should probabily leave CV evaluate single model and
-        # create a step like EvaluateAllModels
-        if self._hyperopt:
-            if len(context.model_space) > 1:
-                raise ValueError("Multiple models are not supported by Hyperopt yet")
-            model = context.model_space[0]
-
-            if model_params is not None:
-                model = model(**model_params) # ugly
-            cv_score = cross_val_score(
-                   model,
-                   dataset.data,
-                   dataset.target,
-                   cv=self._n_folds,
-                   n_jobs=self._n_jobs)
-            return {'loss': np.mean(cv_score), 'status': STATUS_OK}
+        # still a bit ugly...
+        # 1. model_params contain hyperopt template if we are using Hyperopt
+        # 2. hparams is passsed by hyperopy only when using Hyperopt step
+        if hparams is not None:
+            model = model(**hparams)
         else:
-            for model in context.model_space:
+            model = model(**model_params) 
 
-                cv_scores = cross_val_score(
-                       model,
-                       dataset.data,
-                       dataset.target,
-                       cv=self._n_folds,
-                       n_jobs=self._n_jobs)
+        self.cv_score = cross_val_score(
+               model,
+               dataset.data,
+               dataset.target,
+               cv=self._n_folds,
+               n_jobs=self._n_jobs)
 
-                cv_results.append((model, np.mean(cv_scores)))
-
-        return dataset, cv_results
+        return dataset, (model, np.mean(self.cv_score))
 
 
-class Validate:
+class Validate(ModelSpaceFunctor):
     """
     Class for validation step in pipeline with using user metrics
     """
@@ -110,7 +96,7 @@ class Validate:
         self._test_size = test_size
         self._metrics = metrics
 
-    def __call__(self, dataset, context):
+    def __call__(self, dataset, context, hparams=None):
         """
         Executes validation for all model in model_space.
 
@@ -130,18 +116,25 @@ class Validate:
         validation_results : list of tuples
             Tuples like (model, score)
         """
+        model, model_params = context 
+
+        # still a bit ugly...
+        # 1. model_params contain hyperopt template if we are using Hyperopt
+        # 2. hparams is passsed by hyperopy only when using Hyperopt step
+        if hparams is not None:
+            model = model(**hparams)
+        else:
+            model = model(**model_params) 
+
         X_train, X_test, y_train, y_test = train_test_split(
             dataset.data,
             dataset.target,
             test_size=self._test_size,
             random_state=42)
-        validation_results = []
 
-        for model in context.model_space:
-            model.fit(X_train, y_train)
-            validation_results.append((model, self._metrics(
-                model.predict(X_test), y_test)))
-        return dataset, validation_results
+        model.fit(X_train, y_train)
+        validation_results = self._metrics(model.predict(X_test), y_test)
+        return dataset, (model, validation_results)
 
 
 class ChooseBest:
@@ -179,7 +172,6 @@ class ChooseBest:
         sorted_scores : list of tuples 
             Only the top self._k tuples like (model, score) with the best score
         """
-        dataset = pipe_input[0]
-        model_scores = pipe_input[1]
+        model_scores = [inp[1] for inp in pipe_input]
         sorted_scores = sorted(model_scores, key=operator.itemgetter(1))
-        return dataset, sorted_scores[:self._k]
+        return sorted_scores[:self._k]

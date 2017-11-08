@@ -12,45 +12,33 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
 
-class Data:
-    def __init__(self):
-        pass
-
-    def __call__(self, pipe_input, context):
-        return Dataset(datasets.load_iris().data, datasets.load_iris().target)
-
-
 class TestSearchPipeline(unittest.TestCase):
     def test_step_validate(self):
         model_list = [
-            LogisticRegression(),
-            RandomForestClassifier(n_estimators=100),
-            GradientBoostingClassifier(),
-            SVC(),
-            KNeighborsClassifier(),
+            (LogisticRegression, {}),
+            (RandomForestClassifier, {'n_estimators': 100}),
+            (GradientBoostingClassifier, {}),
+            (SVC, {}),
+            (KNeighborsClassifier, {}),
         ]
-        try:
-            LocalExecutor() << (Pipeline() >>
-                PipelineStep('data', Data()) >>
-                PipelineStep('model space', ModelSpace(model_list)) >>
-                PipelineStep('validation', Validate(test_size=0.33, metrics=accuracy_score)) >>
-                PipelineStep('choose', ChooseBest(3)))
-        except:
-            self.fail("LocalExecutor failed unexpectedly!")
+
+        data = Dataset(datasets.load_iris().data, datasets.load_iris().target)
+        LocalExecutor(data) << (Pipeline() >>
+            PipelineStep('model space', ModelSpace(model_list)) >>
+            PipelineStep('validation', Validate(test_size=0.33, metrics=accuracy_score)) >>
+            PipelineStep('choose', ChooseBest(3)))
 
     def test_step_cv(self):
         model_list = [
-            LogisticRegression(),
-            RandomForestClassifier(n_estimators=100),
-            GradientBoostingClassifier(),
-            SVC(),
-            KNeighborsClassifier(),
+            (LogisticRegression, {}),
+            (RandomForestClassifier, {'n_estimators': 100}),
+            (GradientBoostingClassifier, {}),
+            (SVC, {}),
+            (KNeighborsClassifier, {}),
         ]
-        try:
-            LocalExecutor() << (Pipeline() >> 
-                PipelineStep('data', Data()) >>
-                PipelineStep('model space', ModelSpace(model_list)) >>
-                PipelineStep('cv', CV()) >>
-                PipelineStep('choose', ChooseBest(3)))
-        except:
-            self.fail("LocalExecutor failed unexpectedly!")
+
+        data = Dataset(datasets.load_iris().data, datasets.load_iris().target)
+        LocalExecutor(data) << (Pipeline() >> 
+            PipelineStep('model space', ModelSpace(model_list)) >>
+            PipelineStep('cv', CV()) >>
+            PipelineStep('choose', ChooseBest(3)))

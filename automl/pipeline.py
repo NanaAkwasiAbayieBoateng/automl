@@ -8,6 +8,7 @@ class PipelineContext:
         self.epoch = 0
         self.prev_step = None
         self.feature_scores = None
+        self.model_space = [] 
 
 
 class PipelineStep:
@@ -39,6 +40,14 @@ class PipelineStep:
                 return self._cached_response
         else:
             return self._func(pipe_input, context, *self._args, **self._kwargs)
+
+    def is_model_space_functor(self):
+        return isinstance(self._func, ModelSpaceFunctor)
+
+
+class ModelSpaceFunctor:
+    """Use this class to mark any PipelineStep to be run on each
+    model/parameter set from PipelineContext.model_space"""
 
 
 class Pipeline:
@@ -111,7 +120,11 @@ class LocalExecutor:
             pipe_output = input_data
             for step in tqdm(pipeline.steps):
                 self._log.info(f"Running step '{step.name}'")
-                pipe_output = step(pipe_output, self._context)
+                if step.is_model_space_functor():
+                    pipe_output = [step(pipe_output, model_and_params)
+                                   for model_and_params in self._context.model_space]
+                else:
+                    pipe_output = step(pipe_output, self._context)
                 print(f"Out is {pipe_output}")
         
         return self._context, pipe_output

@@ -23,11 +23,10 @@ class TestHyperparameters(unittest.TestCase):
         dataset = Dataset(x, y)
         result = LocalExecutor(dataset) << (
                                     Pipeline() 
-                                    >> ModelSpace([RandomForestClassifier])
-                                    >> Hyperopt(CV(hyperopt_eval_format=True), 
-                                                random_forest_hp_space(),
+                                    >> ModelSpace([(RandomForestClassifier, random_forest_hp_space())])
+                                    >> Hyperopt(CV(), 
                                                 max_evals=max_evals)
                                     )
-        
-        self.assertIsInstance(result[1], hyperopt.base.Trials) 
-        self.assertEqual(len(result[1]), max_evals) 
+        dataset, trials = result[1][0] 
+        self.assertIsInstance(trials, hyperopt.base.Trials) 
+        self.assertEqual(len(trials), max_evals) 
