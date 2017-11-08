@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from automl.data.loader import DatasetLoader
+from automl.pipeline import PipelineData
 
 
 class TestDataLoader(unittest.TestCase):
@@ -22,10 +23,11 @@ class TestDataLoader(unittest.TestCase):
     def test_custom_loader(self):
         loader = DatasetLoader()
         loader.register_custom_loader("custom",
-                                      lambda x: "custom_loader_called")
+                                      lambda x:
+                                      PipelineData("custom_loader_called"))
 
         result = loader("custom:///path")
-        self.assertEqual(result, "custom_loader_called")
+        self.assertEqual(result.dataset.dataset, "custom_loader_called")
 
     def test_custom_loader_err(self):
 

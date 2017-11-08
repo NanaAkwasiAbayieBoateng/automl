@@ -1,9 +1,8 @@
 import unittest
 
-from automl.pipeline import PipelineContext
+from automl.pipeline import PipelineContext, PipelineData
 from automl.data.dataset import Dataset
 from automl.model import ModelSpace, CV
-from automl.data.dataset import Dataset
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -30,14 +29,15 @@ class TestModel(unittest.TestCase):
         self.assertListEqual(model_list_1, context.model_space)
 
     def test_cv(self):
-        dataset = Dataset(datasets.load_iris().data,
-                          datasets.load_iris().target)
+        dataset = PipelineData(Dataset(datasets.load_iris().data,
+                          datasets.load_iris().target))
 
         cv = CV(n_folds=5)
         self.assertEqual(
-                cv(dataset, (RandomForestClassifier, {'random_state': 1}))[1][1],
+                cv(dataset, (RandomForestClassifier, {'random_state':
+                    1})).return_val.score,
             cross_val_score(
                 RandomForestClassifier(random_state=1),
-                dataset.data,
-                dataset.target,
+                dataset.dataset.data,
+                dataset.dataset.target,
                 cv=5).mean())

@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.cross_validation import cross_val_score
 from sklearn.cross_validation import train_test_split
 
-from automl.pipeline import ModelSpaceFunctor
+from automl.pipeline import ModelSpaceFunctor, PipelineData
 
 
 class ModelSpace:
@@ -22,7 +22,7 @@ class ModelSpace:
     def __init__(self, model_list):
         self._model_list = model_list
 
-    def __call__(self, dataset, context):
+    def __call__(self, pipeline_data, context):
         """
         Sets model space in PipelineContext and passes unchanged dataset on the next step
 
@@ -40,8 +40,13 @@ class ModelSpace:
             Unchanged dataset is passed to next step in pipeline
         """
         context.model_space = self._model_list
-        return dataset
+        return pipeline_data
 
+class ValidationResult:
+    def __init__(self, model, params, score):
+        self.model_class = model.__class__
+        self.params = params
+        self.score = score
 
 class CV(ModelSpaceFunctor):
     """
@@ -55,25 +60,26 @@ class CV(ModelSpaceFunctor):
         else:
             self._n_jobs = n_jobs
 
-    def __call__(self, dataset, context, hparams=None):
+    def __call__(self, pipeline_data, context, hparams=None):
         model, model_params = context 
 
         # still a bit ugly...
         # 1. model_params contain hyperopt template if we are using Hyperopt
         # 2. hparams is passsed by hyperopy only when using Hyperopt step
         if hparams is not None:
-            model = model(**hparams)
+            params = hparams
         else:
-            model = model(**model_params) 
+            params = model_params
+        model = model(**params) 
 
-        self.cv_score = cross_val_score(
+        cv_score = cross_val_score(
                model,
-               dataset.data,
-               dataset.target,
+               pipeline_data.dataset.data,
+               pipeline_data.dataset.target,
                cv=self._n_folds,
                n_jobs=self._n_jobs)
-
-        return dataset, (model, np.mean(self.cv_score))
+        result = ValidationResult(model, params, np.mean(cv_score))
+        return PipelineData(pipeline_data.dataset, result)
 
 
 class Validate(ModelSpaceFunctor):
@@ -96,7 +102,7 @@ class Validate(ModelSpaceFunctor):
         self._test_size = test_size
         self._metrics = metrics
 
-    def __call__(self, dataset, context, hparams=None):
+    def __call__(self, pipeline_data, context, hparams=None):
         """
         Executes validation for all model in model_space.
 
@@ -122,19 +128,22 @@ class Validate(ModelSpaceFunctor):
         # 1. model_params contain hyperopt template if we are using Hyperopt
         # 2. hparams is passsed by hyperopy only when using Hyperopt step
         if hparams is not None:
-            model = model(**hparams)
+            params = hparams
         else:
-            model = model(**model_params) 
+            params = model_params
+        model = model(**params) 
 
         X_train, X_test, y_train, y_test = train_test_split(
-            dataset.data,
-            dataset.target,
+            pipeline_data.dataset.data,
+            pipeline_data.dataset.target,
             test_size=self._test_size,
             random_state=42)
 
         model.fit(X_train, y_train)
-        validation_results = self._metrics(model.predict(X_test), y_test)
-        return dataset, (model, validation_results)
+        val_score = self._metrics(model.predict(X_test), y_test)
+        result = ValidationResult(model, params, val_score)
+
+        return PipelineData(pipeline_data.dataset, result)
 
 
 class ChooseBest:
@@ -151,7 +160,7 @@ class ChooseBest:
         """
         self._k = k
 
-    def __call__(self, pipe_input, context):
+    def __call__(self, pipeline_data, context):
         """
         Parametrs
         ---------
@@ -172,6 +181,6 @@ class ChooseBest:
         sorted_scores : list of tuples 
             Only the top self._k tuples like (model, score) with the best score
         """
-        model_scores = [inp[1] for inp in pipe_input]
-        sorted_scores = sorted(model_scores, key=operator.itemgetter(1))
-        return sorted_scores[:self._k]
+        model_scores = [inp.return_val for inp in pipeline_data]
+        sorted_scores = sorted(model_scores, key=operator.attrgetter('score'))
+        return PipelineData(None, sorted_scores[:self._k])

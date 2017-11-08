@@ -5,7 +5,7 @@ from functools import partial
 import random
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
-
+from automl.pipeline import PipelineData
 
 
 
@@ -23,7 +23,7 @@ class SklearnFeatureGenerator:
         self._log = logging.getLogger(self.__class__.__name__)
         self._transformer = transformer_class(*args, **kwargs)
 
-    def __call__(self, dataset, pipeline_context):
+    def __call__(self, pipeline_data, pipeline_context):
         """
         Parameters
         ----------
@@ -39,8 +39,8 @@ class SklearnFeatureGenerator:
             Transformed array.
         """
 
-        dataset.data = self._transformer.fit_transform(dataset.data)
-        return dataset
+        pipeline_data.dataset = self._transformer.fit_transform(pipeline_data.dataset.data)
+        return pipeline_data
 
 
 class FormulaFeatureGenerator:
@@ -152,7 +152,7 @@ class FormulaFeatureGenerator:
         return X[:, random.randint(0, X.shape[1]-1)].reshape(X.shape[0], 1), \
                X[:, random.randint(0, X.shape[1]-1)].reshape(X.shape[0], 1)
 
-    def __call__(self, dataset, limit, pipeline_context):
+    def __call__(self, pipeline_data, limit, pipeline_context):
         """
         Parameters
         ----------
@@ -170,13 +170,16 @@ class FormulaFeatureGenerator:
         XF : numpy array of shape [n_samples, n_features+limit]
             Transformed array.
         """
-        if not isinstance(dataset.data, np.ndarray):
-            X = np.array(dataset.data)
+        if not isinstance(pipeline_data.dataset, np.ndarray):
+            X = np.array(pipeline_data.dataset.data)
+        else:
+            X = pipeline_data.dataset.data
+
         for _ in range(0, limit):
             X = self._func_map[random.sample(self.used_func, 1)[0]](X)
 
-        dataset.data = X
-        return dataset 
+        pipeline_data.dataset = X
+        return pipeline_data 
 
 
 PolynomialGenerator = partial(SklearnFeatureGenerator, PolynomialFeatures)

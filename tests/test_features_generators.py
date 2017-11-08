@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import random
 
 from automl.feature.generators import SklearnFeatureGenerator, FormulaFeatureGenerator
-from automl.pipeline import PipelineContext
+from automl.pipeline import PipelineContext, PipelineData
 from automl.data.dataset import Dataset
 
 import numpy as np
@@ -16,7 +16,7 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         Transformer.fit_transform.return_value = []
 
         df = pd.DataFrame([[1, 2], [3, 4]])
-        X = Dataset(df, None)
+        X = PipelineData(Dataset(df, None))
         context = PipelineContext()
 
         transformer = lambda *args, **kwargs: Transformer
@@ -37,9 +37,10 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
     def test_generate_formula_feature(self):
         features = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         df = pd.DataFrame(features)
-        X = Dataset(df, None)
+        X = PipelineData(Dataset(df, None))
         gen = FormulaFeatureGenerator(['+', '*', '/', '-'])
         limit = random.randint(0, 100)
         context = PipelineContext()
+        result_shape = gen(X, limit, context).dataset.data.shape[1]
         self.assertEqual(
-            np.array(features).shape[1] + limit, gen(X, limit, context).data.shape[1])
+            np.array(features).shape[1] + limit, result_shape)

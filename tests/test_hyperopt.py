@@ -27,6 +27,6 @@ class TestHyperparameters(unittest.TestCase):
                                     >> Hyperopt(CV(), 
                                                 max_evals=max_evals)
                                     )
-        dataset, trials = result[1][0] 
+        trials = result[1][0].return_val
         self.assertIsInstance(trials, hyperopt.base.Trials) 
         self.assertEqual(len(trials), max_evals) 

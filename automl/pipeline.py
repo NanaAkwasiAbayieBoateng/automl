@@ -11,6 +11,12 @@ class PipelineContext:
         self.model_space = [] 
 
 
+class PipelineData:
+    def __init__(self, dataset, return_val=None):
+        self.dataset = dataset
+        self.return_val = return_val
+
+        
 class PipelineStep:
     """Base class for all pipeline steps
     
@@ -82,7 +88,7 @@ class LocalExecutor:
     >>> LocalExecutor(epochs=10) << pipeline
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, input_data=None, *args, **kwargs):
         """
         Parameters
         ----------
@@ -94,9 +100,10 @@ class LocalExecutor:
         self._context = PipelineContext()
         self._args = args
         self._kwargs = kwargs
+        self._input_data = input_data
 
     def __lshift__(self, other):
-        return self.run(other, *self._args, **self._kwargs)
+        return self.run(other, self._input_data, *self._args, **self._kwargs)
 
     def run(self, pipeline, input_data=None, epochs=1):
         """Run pipeline.
@@ -113,18 +120,20 @@ class LocalExecutor:
         -------
         result
             result of a given pipeline"""
+        if not isinstance(input_data, PipelineData):
+            input_data = PipelineData(input_data)
+
         for epoch_n in range(0, epochs):
             self._context.epoch = epoch_n
             self._log.info(f"Starting AutoML Epoch #{epoch_n + 1}")
             
-            pipe_output = input_data
+            pipeline_data = input_data
             for step in tqdm(pipeline.steps):
                 self._log.info(f"Running step '{step.name}'")
                 if step.is_model_space_functor():
-                    pipe_output = [step(pipe_output, model_and_params)
+                    pipeline_data = [step(pipeline_data, model_and_params)
                                    for model_and_params in self._context.model_space]
                 else:
-                    pipe_output = step(pipe_output, self._context)
-                print(f"Out is {pipe_output}")
+                    pipeline_data = step(pipeline_data, self._context)
         
-        return self._context, pipe_output
+        return self._context, pipeline_data

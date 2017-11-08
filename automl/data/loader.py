@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
+from automl.pipeline import PipelineData
+
 
 class DatasetLoader:
     """Data loading for common formats"""
@@ -43,7 +45,7 @@ class DatasetLoader:
         if uri.scheme not in self._loader_map:
             raise ValueError(f"{uri.scheme} is not supported")
 
-        return self._loader_map[uri.scheme](uri.path, **self._loader_args)
+        return PipelineData(self._loader_map[uri.scheme](uri.path, **self._loader_args))
     
     def _load_csv(self, csv_path, **kwargs):
         return pd.read_csv(csv_path, **self._loader_args)
