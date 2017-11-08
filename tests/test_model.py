@@ -32,7 +32,6 @@ class TestModel(unittest.TestCase):
             KNeighborsClassifier(),
         ]
 
-
         context = PipelineContext()
         model_space = ModelSpace(model_list_1)
         model_space('data', context)
@@ -53,13 +52,14 @@ class TestModel(unittest.TestCase):
         model_space = ModelSpace(model_list)
         model_space('data', context)
 
-        dataset = Dataset(datasets.load_iris().data, datasets.load_iris().target)
+        dataset = Dataset(datasets.load_iris().data,
+                          datasets.load_iris().target)
 
         cv = CV(n_folds=5)
-        self.assertEqual(cv(dataset, context)[1][1],
-            cross_val_score(RandomForestClassifier(random_state=1), dataset.data, dataset.target, cv=5).mean()
-        )
-
-        
-
-
+        self.assertEqual(
+            cv(dataset, context)[1][1][1],
+            cross_val_score(
+                RandomForestClassifier(random_state=1),
+                dataset.data,
+                dataset.target,
+                cv=5).mean())
