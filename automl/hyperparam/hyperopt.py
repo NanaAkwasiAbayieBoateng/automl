@@ -10,7 +10,7 @@ class Hyperopt(ModelSpaceFunctor):
 
         # wrap score function so it returns appropriate format for hyperopt
         self._score_step_fn = lambda *args, **kwargs: {
-                'loss': score_step_fn(*args, **kwargs).return_val.score,
+                'loss': score_step_fn(*args, **kwargs).score,
                 'status': STATUS_OK 
                 }
 

@@ -29,15 +29,15 @@ class TestModel(unittest.TestCase):
         self.assertListEqual(model_list_1, context.model_space)
 
     def test_cv(self):
-        dataset = PipelineData(Dataset(datasets.load_iris().data,
+        pipeline_data = PipelineData(Dataset(datasets.load_iris().data,
                           datasets.load_iris().target))
 
         cv = CV(n_folds=5)
         self.assertEqual(
-                cv(dataset, (RandomForestClassifier, {'random_state':
-                    1})).return_val.score,
+                cv(pipeline_data, (RandomForestClassifier, {'random_state':
+                    1})).score,
             cross_val_score(
                 RandomForestClassifier(random_state=1),
-                dataset.dataset.data,
-                dataset.dataset.target,
+                pipeline_data.dataset.data,
+                pipeline_data.dataset.target,
                 cv=5).mean())
