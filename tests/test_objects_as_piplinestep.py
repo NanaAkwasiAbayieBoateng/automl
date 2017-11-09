@@ -59,7 +59,7 @@ class TestSearchPipeline(unittest.TestCase):
             PipelineStep('cv', Validate(test_size=0.33, metrics=mean_absolute_error)) >>
             PipelineStep('choose', ChooseBest(3)))
 
-    def test_asdf(self):
+    def test_all_step(self):
         model_list = [
             (Lasso, {}),
             (Ridge, {})
