@@ -25,181 +25,6 @@ try:
 except ImportError:
     xgboost = None
 
-##########################################
-##==== Wrappers for sklearn modules ====##
-##########################################
-@scope.define
-def sklearn_SVC(*args, **kwargs):
-    return sklearn.svm.SVC(*args, **kwargs)
-
-@scope.define
-def sklearn_SVR(*args, **kwargs):
-    return sklearn.svm.SVR(*args, **kwargs)
-
-@scope.define
-def ts_LagSelector(*args, **kwargs):
-    return lagselectors.LagSelector(*args, **kwargs)
-
-@scope.define
-def sklearn_LinearSVC(*args, **kwargs):
-    return sklearn.svm.LinearSVC(*args, **kwargs)
-
-@scope.define
-def sklearn_KNeighborsClassifier(*args, **kwargs):
-    return sklearn.neighbors.KNeighborsClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_KNeighborsRegressor(*args, **kwargs):
-    return sklearn.neighbors.KNeighborsRegressor(*args, **kwargs)
-
-@scope.define
-def sklearn_AdaBoostClassifier(*args, **kwargs):
-    return sklearn.ensemble.AdaBoostClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_AdaBoostRegressor(*args, **kwargs):
-    return sklearn.ensemble.AdaBoostRegressor(*args, **kwargs)
-
-@scope.define
-def sklearn_GradientBoostingClassifier(*args, **kwargs):
-    return sklearn.ensemble.GradientBoostingClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_GradientBoostingRegressor(*args, **kwargs):
-    return sklearn.ensemble.GradientBoostingRegressor(*args, **kwargs)
-
-@scope.define
-def sklearn_RandomForestClassifier(*args, **kwargs):
-    return sklearn.ensemble.RandomForestClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_RandomForestRegressor(*args, **kwargs):
-    return sklearn.ensemble.RandomForestRegressor(*args, **kwargs)
-
-@scope.define
-def sklearn_ExtraTreesClassifier(*args, **kwargs):
-    return sklearn.ensemble.ExtraTreesClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_ExtraTreesRegressor(*args, **kwargs):
-    return sklearn.ensemble.ExtraTreesRegressor(*args, **kwargs)
-
-@scope.define
-def sklearn_DecisionTreeClassifier(*args, **kwargs):
-    return sklearn.tree.DecisionTreeClassifier(*args, **kwargs)
-
-
-@scope.define
-def sklearn_SGDClassifier(*args, **kwargs):
-    return sklearn.linear_model.SGDClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_SGDRegressor(*args, **kwargs):
-    return sklearn.linear_model.SGDRegressor(*args, **kwargs)
-
-@scope.define
-def sklearn_XGBClassifier(*args, **kwargs):
-    if xgboost is None:
-        raise ImportError('No module named xgboost')
-    return xgboost.XGBClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_XGBRegressor(*args, **kwargs):
-    if xgboost is None:
-        raise ImportError('No module named xgboost')
-    return xgboost.XGBRegressor(*args, **kwargs)
-
-# @scope.define
-# def sklearn_Ridge(*args, **kwargs):
-#     return sklearn.linear_model.Ridge(*args, **kwargs)
-
-@scope.define
-def sklearn_PassiveAggressiveClassifier(*args, **kwargs):
-    return sklearn.linear_model.PassiveAggressiveClassifier(*args, **kwargs)
-
-
-@scope.define
-def sklearn_LinearDiscriminantAnalysis(*args, **kwargs):
-    return sklearn.discriminant_analysis.LinearDiscriminantAnalysis(*args, **kwargs)
-
-
-@scope.define
-def sklearn_QuadraticDiscriminantAnalysis(*args, **kwargs):
-    return sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis(*args, **kwargs)
-
-
-@scope.define
-def sklearn_MultinomialNB(*args, **kwargs):
-    return sklearn.naive_bayes.MultinomialNB(*args, **kwargs)
-
-@scope.define
-def sklearn_GaussianNB(*args, **kwargs):
-    return sklearn.naive_bayes.GaussianNB(*args, **kwargs)
-
-@scope.define
-def sklearn_OneVsRestClassifier(*args, **kwargs):
-    return sklearn.multiclass.OneVsRestClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_OneVsOneClassifier(*args, **kwargs):
-    return sklearn.multiclass.OneVsOneClassifier(*args, **kwargs)
-
-@scope.define
-def sklearn_OutputCodeClassifier(*args, **kwargs):
-    return sklearn.multiclass.OutputCodeClassifier(*args, **kwargs)
-
-
-@scope.define
-def sklearn_PCA(*args, **kwargs):
-    return sklearn.decomposition.PCA(*args, **kwargs)
-
-@scope.define
-def sklearn_Tfidf(*args, **kwargs):
-    return sklearn.feature_extraction.text.TfidfVectorizer(*args, **kwargs)
-
-@scope.define
-def sklearn_StandardScaler(*args, **kwargs):
-    return sklearn.preprocessing.StandardScaler(*args, **kwargs)
-
-@scope.define
-def sklearn_MinMaxScaler(*args, **kwargs):
-    return sklearn.preprocessing.MinMaxScaler(*args, **kwargs)
-
-@scope.define
-def sklearn_Normalizer(*args, **kwargs):
-    return sklearn.preprocessing.Normalizer(*args, **kwargs)
-
-@scope.define
-def sklearn_OneHotEncoder(*args, **kwargs):
-    return sklearn.preprocessing.OneHotEncoder(*args, **kwargs)
-
-@scope.define
-def sklearn_BernoulliRBM(*args, **kwargs):
-    return sklearn.neural_network.BernoulliRBM(*args, **kwargs)
-
-@scope.define
-def sklearn_ColumnKMeans(*args, **kwargs):
-    return ColumnKMeans(*args, **kwargs)
-
-@scope.define
-def patience_param(x):
-    """
-    Mark a hyperparameter as having a simple monotonic increasing
-    relationship with both CPU time and the goodness of the model.
-    """
-    # -- TODO: make this do something!
-    return x
-
-@scope.define
-def inv_patience_param(x):
-    """
-    Mark a hyperparameter as having a simple monotonic decreasing
-    relationship with both CPU time and the goodness of the model.
-    """
-    # -- TODO: make this do something!
-    return x
-
-
 ##############################
 ##==== Global variables ====##
 ##############################
@@ -486,7 +311,7 @@ def _svr_hp_space(name_func, epsilon=None):
 #########################################
 ##==== SVM classifier constructors ====##
 #########################################
-def svc_kernel(name, kernel, random_state=None, probability=False, **kwargs):
+def svc_kernel_hp_space(name, kernel, random_state=None, probability=False, **kwargs):
     """
     Return a pyll graph with hyperparamters that will construct
     a sklearn.svm.SVC model with a user specified kernel.
@@ -498,38 +323,38 @@ def svc_kernel(name, kernel, random_state=None, probability=False, **kwargs):
 
     hp_space = _svm_hp_space(_name, kernel=kernel, **kwargs)
     hp_space.update(_svc_hp_space(_name, random_state, probability))
-    return scope.sklearn_SVC(**hp_space)
+    return hp_space
 
-def svc_linear(name, **kwargs):
+def svc_linear_hp_space(name, **kwargs):
     '''Simply use the svc_kernel function with kernel fixed as linear to
     return an SVC object.
     '''
-    return svc_kernel(name, kernel='linear', **kwargs)
+    return svc_kernel_hp_space(name, kernel='linear', **kwargs)
 
-def svc_rbf(name, **kwargs):
+def svc_rbf_hp_space(name, **kwargs):
     '''Simply use the svc_kernel function with kernel fixed as rbf to
     return an SVC object.
     '''
-    return svc_kernel(name, kernel='rbf', **kwargs)
+    return svc_kernel_hp_space(name, kernel='rbf', **kwargs)
 
-def svc_poly(name, **kwargs):
+def svc_poly_hp_space(name, **kwargs):
     '''Simply use the svc_kernel function with kernel fixed as poly to
     return an SVC object.
     '''
-    return svc_kernel(name, kernel='poly', **kwargs)
+    return svc_kernel_hp_space(name, kernel='poly', **kwargs)
 
-def svc_sigmoid(name, **kwargs):
+def svc_sigmoid_hp_space(name, **kwargs):
     '''Simply use the svc_kernel function with kernel fixed as sigmoid to
     return an SVC object.
     '''
-    return svc_kernel(name, kernel='sigmoid', **kwargs)
+    return svc_kernel_hp_space(name, kernel='sigmoid', **kwargs)
 
-def svc(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
+def svc_hp_space(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
     svms = {
-        'linear': partial(svc_linear, name=name),
-        'rbf': partial(svc_rbf, name=name),
-        'poly': partial(svc_poly, name=name),
-        'sigmoid': partial(svc_sigmoid, name=name),
+        'linear': partial(svc_linear_hp_space, name=name),
+        'rbf': partial(svc_rbf_hp_space, name=name),
+        'poly': partial(svc_poly_hp_space, name=name),
+        'sigmoid': partial(svc_sigmoid_hp_space, name=name),
     }
     choices = [svms[kern](**kwargs) for kern in kernels]
     if len(choices) == 1:
@@ -541,7 +366,7 @@ def svc(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
 ########################################
 ##==== SVM regressor constructors ====##
 ########################################
-def svr_kernel(name, kernel, epsilon=None, **kwargs):
+def svr_kernel_hp_space(name, kernel, epsilon=None, **kwargs):
     """
     Return a pyll graph with hyperparamters that will construct
     a sklearn.svm.SVR model with a user specified kernel.
@@ -555,38 +380,38 @@ def svr_kernel(name, kernel, epsilon=None, **kwargs):
 
     hp_space = _svm_hp_space(_name, kernel=kernel, **kwargs)
     hp_space.update(_svr_hp_space(_name, epsilon))
-    return scope.sklearn_SVR(**hp_space)
+    return hp_space
 
-def svr_linear(name, **kwargs):
+def svr_linear_hp_space(name, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as linear to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='linear', **kwargs)
+    return svr_kernel_hp_space(name, kernel='linear', **kwargs)
 
-def svr_rbf(name, **kwargs):
+def svr_rbf_hp_space(name, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as rbf to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='rbf', **kwargs)
+    return svr_kernel_hp_space(name, kernel='rbf', **kwargs)
 
-def svr_poly(name, **kwargs):
+def svr_poly_hp_space(name, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as poly to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='poly', **kwargs)
+    return svr_kernel_hp_space(name, kernel='poly', **kwargs)
 
-def svr_sigmoid(name, **kwargs):
+def svr_sigmoid_hp_space(name, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as sigmoid to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='sigmoid', **kwargs)
+    return svr_kernel_hp_space(name, kernel='sigmoid', **kwargs)
 
-def svr(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
+def svr_hp_space(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
     svms = {
-        'linear': partial(svr_linear, name=name),
-        'rbf': partial(svr_rbf, name=name),
-        'poly': partial(svr_poly, name=name),
-        'sigmoid': partial(svr_sigmoid, name=name),
+        'linear': partial(svr_linear_hp_space, name=name),
+        'rbf': partial(svr_rbf_hp_space, name=name),
+        'poly': partial(svr_poly_hp_space, name=name),
+        'sigmoid': partial(svr_sigmoid_hp_space, name=name),
     }
     choices = [svms[kern](**kwargs) for kern in kernels]
     if len(choices) == 1:
@@ -595,6 +420,7 @@ def svr(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
         rval = hp.choice('%s.kernel' % name, choices)
     return rval
 
+## STOPPED WRAPPING HERE
 ##################################################
 ##==== Liblinear SVM classifier constructor ====##
 ##################################################
@@ -738,44 +564,16 @@ def _trees_hp_space(
 #############################################################
 ##==== Random forest classifier/regressor constructors ====##
 #############################################################
-def random_forest(name, criterion=None, **kwargs):
-    '''
-    Return a pyll graph with hyperparamters that will construct
-    a sklearn.ensemble.RandomForestClassifier model.
-    Args:
-        criterion([str]): choose 'gini' or 'entropy'.
-    See help(hpsklearn.components._trees_hp_space) for info on additional
-    available random forest/extra trees arguments.
-    '''
-    def _name(msg):
-        return '%s.%s_%s' % (name, 'rfc', msg)
-
-    hp_space = _trees_hp_space(_name, **kwargs)
-    hp_space['criterion'] = (_trees_criterion(_name('criterion'))
-                             if criterion is None else criterion)
-    return scope.sklearn_RandomForestClassifier(**hp_space)
-
-
-def random_forest_regression(name, criterion='mse', **kwargs):
-    '''
-    Return a pyll graph with hyperparamters that will construct
-    a sklearn.ensemble.RandomForestRegressor model.
-    Args:
-        criterion([str]): 'mse' is the only choice.
-    See help(hpsklearn.components._trees_hp_space) for info on additional
-    available random forest/extra trees arguments.
-    '''
-    def _name(msg):
-        return '%s.%s_%s' % (name, 'rfr', msg)
-
-    hp_space = _trees_hp_space(_name, **kwargs)
-    hp_space['criterion'] = criterion
-    return scope.sklearn_RandomForestRegressor(**hp_space)
-
-
 def random_forest_hp_space(criterion='gini', **kwargs):
+    """"Return a hyperparameter template for RandomForest model.
+    
+    Parameters
+    ----------
+    criterion: str
+        'gini' or 'entropy' and 'mse' for classification
+    """
     def _name(msg):
-        return '%s.%s_%s' % ("RF", 'rfr', msg)
+        return '%s.%s_%s' % ("RandomForest", 'rfr', msg)
     hp_space = _trees_hp_space(_name, **kwargs)
     hp_space['criterion'] = criterion
     return hp_space
