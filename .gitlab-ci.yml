@@ -1,7 +1,8 @@
-image: continuumio/miniconda3
+image: python:3
 
 before_script:
     - pip install -e .
+    - pip install pytest pytest-cov
 
 stages:
     - test

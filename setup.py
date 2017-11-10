@@ -11,7 +11,8 @@ setup(name='auto-ml',
           'pandas>=0.20.3',
           'scikit-learn>=0.19.1',
           'tqdm',
-          'hyperopt>=0.1'
+          'hyperopt>=0.1',
+          'networkx==1.11'
           ],
       license='License :: Other/Proprietary License',
       classifiers=['Topic :: Scientific/Engineering :: Artificial Intelligence',
