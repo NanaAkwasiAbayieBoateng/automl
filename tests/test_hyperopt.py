@@ -4,7 +4,7 @@ import unittest
 import hyperopt
 
 from automl.data.dataset import Dataset
-from automl.hyperparam.hspace import random_forest_hp_space
+from automl.hyperparam.templates import random_forest_hp_space
 from automl.hyperparam.hyperopt import Hyperopt
 from automl.model import CV, ModelSpace
 from automl.pipeline import LocalExecutor, Pipeline
