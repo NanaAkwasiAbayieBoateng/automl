@@ -661,8 +661,7 @@ def _xgboost_reg_lambda(name):
     return hp.loguniform(name, np.log(1), np.log(4))
 
 
-def xgboost_hp_space(name_func,
-                     max_depth=None,
+def xgboost_hp_space(max_depth=None,
                      learning_rate=None,
                      n_estimators=None,
                      gamma=None,
@@ -679,32 +678,32 @@ def xgboost_hp_space(name_func,
     '''Generate XGBoost hyperparameters search space
     '''
     hp_space = dict(
-        max_depth=(_xgboost_max_depth(name_func('max_depth'))
+        max_depth=(_xgboost_max_depth('max_depth')
                    if max_depth is None else max_depth),
-        learning_rate=(_xgboost_learning_rate(name_func('learning_rate'))
+        learning_rate=(_xgboost_learning_rate('learning_rate')
                        if learning_rate is None else learning_rate),
-        n_estimators=(_xgboost_n_estimators(name_func('n_estimators'))
+        n_estimators=(_xgboost_n_estimators('n_estimators')
                       if n_estimators is None else n_estimators),
-        gamma=(_xgboost_gamma(name_func('gamma')) if gamma is None else gamma),
+        gamma=(_xgboost_gamma('gamma') if gamma is None else gamma),
         min_child_weight=(_xgboost_min_child_weight(
-            name_func('min_child_weight'))
+            'min_child_weight')
                           if min_child_weight is None else min_child_weight),
         max_delta_step=max_delta_step,
-        subsample=(_xgboost_subsample(name_func('subsample'))
+        subsample=(_xgboost_subsample('subsample')
                    if subsample is None else subsample),
         colsample_bytree=(_xgboost_colsample_bytree(
-            name_func('colsample_bytree'))
+            'colsample_bytree')
                           if colsample_bytree is None else colsample_bytree),
         colsample_bylevel=(_xgboost_colsample_bylevel(
-            name_func('colsample_bylevel')) if colsample_bylevel is None else
+            'colsample_bylevel') if colsample_bylevel is None else
                            colsample_bylevel),
-        reg_alpha=(_xgboost_reg_alpha(name_func('reg_alpha'))
+        reg_alpha=(_xgboost_reg_alpha('reg_alpha')
                    if reg_alpha is None else reg_alpha),
-        reg_lambda=(_xgboost_reg_lambda(name_func('reg_lambda'))
+        reg_lambda=(_xgboost_reg_lambda('reg_lambda')
                     if reg_lambda is None else reg_lambda),
         scale_pos_weight=scale_pos_weight,
         base_score=base_score,
-        seed=_random_state(name_func('rstate'), random_state))
+        seed=_random_state('rstate', random_state))
     return hp_space
 
 
