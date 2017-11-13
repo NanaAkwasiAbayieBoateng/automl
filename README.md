@@ -4,5 +4,5 @@
 ## Code documentation conventions
 See [numpydoc](https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt)
 
-
-README TBD
+## Installing
+You can install with `setup.py install`. For development purposes use `pip install -e.`

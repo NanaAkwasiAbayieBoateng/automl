@@ -4,12 +4,14 @@ import unittest
 import hyperopt
 
 from automl.data.dataset import Dataset
-from automl.hyperparam.hspace import random_forest_hp_space
+from automl.hyperparam.templates import random_forest_hp_space, xgboost_hp_space
 from automl.hyperparam.hyperopt import Hyperopt
 from automl.model import CV, ModelSpace
 from automl.pipeline import LocalExecutor, Pipeline
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
+
+from xgboost.sklearn import XGBClassifier
 
 
 class TestHyperparameters(unittest.TestCase):
@@ -28,5 +30,19 @@ class TestHyperparameters(unittest.TestCase):
                                                 max_evals=max_evals)
                                     )
         trials = result[1].return_val[0].return_val #needs restructuring
+        self.assertIsInstance(trials, hyperopt.base.Trials) 
+        self.assertEqual(len(trials), max_evals) 
+
+    def test_xgboost(self):
+        max_evals = 2
+        x, y = make_classification()
+        dataset = Dataset(x, y)
+        result = LocalExecutor(dataset) << (
+                                    Pipeline() 
+                                    >> ModelSpace([(XGBClassifier, xgboost_hp_space())])
+                                    >> Hyperopt(CV(), 
+                                                max_evals=max_evals)
+                                    )
+        trials = result[1][0].return_val
         self.assertIsInstance(trials, hyperopt.base.Trials) 
         self.assertEqual(len(trials), max_evals) 

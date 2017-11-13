@@ -1,8 +1,8 @@
-image: continuumio/miniconda3
+image: python:3
 
 before_script:
-    - conda env create -f ./environment.yml
-    - source activate automl
+    - pip install -e .
+    - pip install pytest pytest-cov
 
 stages:
     - test

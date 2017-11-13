@@ -1,6 +1,8 @@
 tags
+.onepanel
+*egg-info*
 __pycache__
 *.swp
 __cache__
 .cache
-.coverage
+.coverage*
