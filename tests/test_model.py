@@ -32,10 +32,9 @@ class TestModel(unittest.TestCase):
         pipeline_data = PipelineData(Dataset(datasets.load_iris().data,
                           datasets.load_iris().target))
 
-        cv = CV(n_folds=5)
-        self.assertEqual(
-                cv(pipeline_data, (RandomForestClassifier, {'random_state':
-                    1})).score,
+        cv = CV('accuracy', n_folds=5)
+        self.assertAlmostEqual(
+                1 - cv(dataset, (RandomForestClassifier, {'random_state': 1})).return_val.score,
             cross_val_score(
                 RandomForestClassifier(random_state=1),
                 pipeline_data.dataset.data,

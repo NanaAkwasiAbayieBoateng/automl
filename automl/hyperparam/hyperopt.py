@@ -4,6 +4,13 @@ from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
 from automl.pipeline import ModelSpaceFunctor, PipelineData
 from hyperopt import STATUS_OK
 
+class HyperparameterSearchResult:
+    def __init__(self, best_model, best_score, history=None):
+        self.best_model = best_model,
+        self.best_score = best_score
+        self.history = history
+
+
 class Hyperopt(ModelSpaceFunctor):
     def __init__(self, score_step_fn, max_evals=100):
         self._log = logging.getLogger(self.__class__.__name__)
@@ -21,10 +28,14 @@ class Hyperopt(ModelSpaceFunctor):
         model, hparam_space = context
 
         score = partial(self._score_step_fn, pipeline_data, context)
-        fmin(score,
-             space=hparam_space,
-             algo=tpe.suggest,
-             trials=self._trials,
-             max_evals=self._max_evals)
-        return PipelineData(pipeline_data.dataset, self._trials)
+        best = fmin(score,
+                    space=hparam_space,
+                    algo=tpe.suggest,
+                    trials=self._trials,
+                    max_evals=self._max_evals)
+        best_loss = sorted(self._trials.losses())[0]
+        result = HyperparameterSearchResult(best,
+                                            best_loss,
+                                            self._trials)
+        return PipelineData(pipeline_data.dataset, result)
 
