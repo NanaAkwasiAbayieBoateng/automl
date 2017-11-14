@@ -52,8 +52,10 @@ class CV(ModelSpaceFunctor):
     """
     Class for cross-validation step in pipeline
     """
-    def __init__(self, n_folds=3, n_jobs=None):
+    def __init__(self, scoring, n_folds=3, n_jobs=None, reverse_score=True):
         self._n_folds = n_folds
+        self._scoring = scoring
+        self._reverse_score = reverse_score
 
         if n_jobs is None:
             self._n_jobs = multiprocessing.cpu_count()
@@ -77,7 +79,10 @@ class CV(ModelSpaceFunctor):
                pipeline_data.dataset.data,
                pipeline_data.dataset.target,
                cv=self._n_folds,
-               n_jobs=self._n_jobs)
+               n_jobs=self._n_jobs,
+               scoring=self._scoring)
+        if self._reverse_score:
+            cv_score = 1 - cv_score
         result = ValidationResult(model, params, np.mean(cv_score))
         return PipelineData(pipeline_data.dataset, result)
 

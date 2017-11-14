@@ -40,7 +40,7 @@ class TestHyperparameters(unittest.TestCase):
         result = LocalExecutor(dataset) << (
                                     Pipeline() 
                                     >> ModelSpace([(XGBClassifier, xgboost_hp_space())])
-                                    >> Hyperopt(CV(), 
+                                    >> Hyperopt(CV('roc_auc'), 
                                                 max_evals=max_evals)
                                     )
         result = result[1][0].return_val
