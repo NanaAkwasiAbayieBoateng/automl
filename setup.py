@@ -21,4 +21,3 @@ setup(name='auto-ml',
                    'Intended Audience :: Developers',
                    'Operating System :: POSIX :: Linux',
                    'Programming Language :: Python :: 3.6'],)
-          ],)
