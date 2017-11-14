@@ -41,7 +41,7 @@ class TestSearchPipeline(unittest.TestCase):
         data = Dataset(datasets.load_iris().data, datasets.load_iris().target)
         LocalExecutor(data) << (Pipeline() >> 
             PipelineStep('model space', ModelSpace(model_list)) >>
-            PipelineStep('cv', CV()) >>
+            PipelineStep('cv', CV('accuracy')) >>
             PipelineStep('choose', ChooseBest(3)))
 
     def test_step_space_regression_model(self):

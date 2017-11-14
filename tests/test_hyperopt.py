@@ -26,12 +26,12 @@ class TestHyperparameters(unittest.TestCase):
         result = LocalExecutor(dataset) << (
                                     Pipeline() 
                                     >> ModelSpace([(RandomForestClassifier, random_forest_hp_space())])
-                                    >> Hyperopt(CV(), 
+                                    >> Hyperopt(CV('roc_auc'), 
                                                 max_evals=max_evals)
                                     )
-        trials = result[1][0].return_val
-        self.assertIsInstance(trials, hyperopt.base.Trials) 
-        self.assertEqual(len(trials), max_evals) 
+        result = result[1][0].return_val
+        self.assertIsInstance(result.history, hyperopt.base.Trials) 
+        self.assertEqual(len(result.history), max_evals) 
 
     def test_xgboost(self):
         max_evals = 2
