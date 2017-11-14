@@ -2,9 +2,6 @@
 
 from automl.pipeline import PipelineData
 
-from sklearn.feature_selection import SelectFromModel
-from sklearn.utils import safe_mask
-
 import numpy as np
 
 class FeatureSelector:
