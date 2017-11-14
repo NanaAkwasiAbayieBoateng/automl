@@ -12,15 +12,8 @@ setup(name='auto-ml',
           'scikit-learn>=0.19.1',
           'tqdm',
           'hyperopt>=0.1',
-<<<<<<< HEAD
           'networkx==1.11',
-          'xgboost'
-||||||| merged common ancestors
-          'networkx==1.11'
-=======
-          'networkx==1.11',
-          'xgboost>=0.6'
->>>>>>> ab3e23e0c9c1569697f5c22102f0dc2a18048ff2
+          'xgboost>=0.6a2'
           ],
       license='License :: Other/Proprietary License',
       classifiers=['Topic :: Scientific/Engineering :: Artificial Intelligence',
@@ -28,3 +21,4 @@ setup(name='auto-ml',
                    'Intended Audience :: Developers',
                    'Operating System :: POSIX :: Linux',
                    'Programming Language :: Python :: 3.6'],)
+          ],)
