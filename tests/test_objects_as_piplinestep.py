@@ -62,7 +62,8 @@ class TestSearchPipeline(unittest.TestCase):
     def test_all_step(self):
         model_list = [
             (Lasso, {}),
-            (Ridge, {})
+            (Ridge, {}),
+            (KernelRidge, {}),
         ]
 
         data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
@@ -71,7 +72,7 @@ class TestSearchPipeline(unittest.TestCase):
             PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*'])) >>
             PipelineStep('cv', Validate(test_size=0.33, metrics=mean_absolute_error)) >>
             PipelineStep('choose', ChooseBest(3)) >>
-            PipelineStep('selection', FeatureSelector()))
+            PipelineStep('selection', FeatureSelector(30)))
 
         print('0'*30)
         for result in pipeline_data.return_val:
