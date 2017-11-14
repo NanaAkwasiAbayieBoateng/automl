@@ -5,7 +5,7 @@ import hyperopt
 
 from automl.data.dataset import Dataset
 from automl.hyperparam.templates import random_forest_hp_space, xgboost_hp_space
-from automl.hyperparam.hyperopt import Hyperopt
+from automl.hyperparam.hyperopt import Hyperopt, HyperparameterSearchResult
 from automl.model import CV, ModelSpace
 from automl.pipeline import LocalExecutor, Pipeline
 from sklearn.datasets import make_classification
@@ -43,6 +43,6 @@ class TestHyperparameters(unittest.TestCase):
                                     >> Hyperopt(CV(), 
                                                 max_evals=max_evals)
                                     )
-        trials = result[1][0].return_val
-        self.assertIsInstance(trials, hyperopt.base.Trials) 
-        self.assertEqual(len(trials), max_evals) 
+        result = result[1][0].return_val
+        self.assertIsInstance(result, HyperparameterSearchResult) 
+        self.assertEqual(len(result.history), max_evals) 
