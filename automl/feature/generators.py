@@ -175,12 +175,9 @@ class FormulaFeatureGenerator:
             X = pipeline_data.dataset.data
 
         for _ in range(0, limit):
-            attempt_number = 1
             new_feature = self._func_map[random.sample(self.used_func, 1)[0]](X)
-            while np.isnan(new_feature).sum() or np.isinf(new_feature).sum() and attempt_number < 10:
-                attempt_number += 1
-                new_feature = self._func_map[random.sample(self.used_func, 1)[0]](X)
-            X = np.append(X, new_feature, axis=1)
+            if np.isfinite(new_feature).all():
+                X = np.append(X, new_feature, axis=1)
 
         pipeline_data.dataset.data = X
         return pipeline_data 
