@@ -39,7 +39,7 @@ class SklearnFeatureGenerator:
             Transformed array.
         """
 
-        pipeline_data.dataset = self._transformer.fit_transform(pipeline_data.dataset.data)
+        pipeline_data.dataset.data = self._transformer.fit_transform(pipeline_data.dataset.data)
         return pipeline_data
 
 
@@ -152,7 +152,7 @@ class FormulaFeatureGenerator:
         return X[:, random.randint(0, X.shape[1]-1)].reshape(X.shape[0], 1), \
                X[:, random.randint(0, X.shape[1]-1)].reshape(X.shape[0], 1)
 
-    def __call__(self, pipeline_data, limit, pipeline_context):
+    def __call__(self, pipeline_data, pipeline_context, limit=10):
         """
         Parameters
         ----------
@@ -178,7 +178,7 @@ class FormulaFeatureGenerator:
         for _ in range(0, limit):
             X = self._func_map[random.sample(self.used_func, 1)[0]](X)
 
-        pipeline_data.dataset = X
+        pipeline_data.dataset.data = X
         return pipeline_data 
 
 

@@ -32,10 +32,10 @@ class TestPipeline(unittest.TestCase):
         df = pd.DataFrame([[1, 2], [3, 4]])
         X = Dataset(df, None)
         poly = PolynomialGenerator(interaction_only=True, degree=4)
-        context, data = LocalExecutor(X) << (Pipeline() >> 
+        context, pipe_output = LocalExecutor(X) << (Pipeline() >> 
                                       PipelineStep('generate_features', poly))
 
-        self.assertEqual(data.dataset.shape, (2, 4))
+        self.assertEqual(pipe_output.dataset.data.shape, (2, 4))
 
     def test_initializer(self):
         func = lambda x, context: context.epoch

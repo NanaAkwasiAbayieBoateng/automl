@@ -41,6 +41,6 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         gen = FormulaFeatureGenerator(['+', '*', '/', '-'])
         limit = random.randint(0, 100)
         context = PipelineContext()
-        result_shape = gen(X, limit, context).dataset.data.shape[1]
+        result_shape = gen(X, context, limit).dataset.data.shape[1]
         self.assertEqual(
             np.array(features).shape[1] + limit, result_shape)

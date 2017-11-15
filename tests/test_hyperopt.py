@@ -29,7 +29,7 @@ class TestHyperparameters(unittest.TestCase):
                                     >> Hyperopt(CV('roc_auc'), 
                                                 max_evals=max_evals)
                                     )
-        result = result[1][0].return_val
+        result = result[1].return_val[0]
         self.assertIsInstance(result.history, hyperopt.base.Trials) 
         self.assertEqual(len(result.history), max_evals) 
 
@@ -43,6 +43,6 @@ class TestHyperparameters(unittest.TestCase):
                                     >> Hyperopt(CV('roc_auc'), 
                                                 max_evals=max_evals)
                                     )
-        result = result[1][0].return_val
+        result = result[1].return_val[0]
         self.assertIsInstance(result, HyperparameterSearchResult) 
         self.assertEqual(len(result.history), max_evals) 

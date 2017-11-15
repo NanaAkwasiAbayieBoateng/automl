@@ -45,6 +45,7 @@ class ModelSpace:
 class ValidationResult:
     def __init__(self, model, params, score):
         self.model_class = model.__class__
+        self.model = model
         self.params = params
         self.score = score
 
@@ -84,7 +85,7 @@ class CV(ModelSpaceFunctor):
         if self._reverse_score:
             cv_score = 1 - cv_score
         result = ValidationResult(model, params, np.mean(cv_score))
-        return PipelineData(pipeline_data.dataset, result)
+        return result
 
 
 class Validate(ModelSpaceFunctor):
@@ -147,8 +148,7 @@ class Validate(ModelSpaceFunctor):
         model.fit(X_train, y_train)
         val_score = self._metrics(model.predict(X_test), y_test)
         result = ValidationResult(model, params, val_score)
-
-        return PipelineData(pipeline_data.dataset, result)
+        return result
 
 
 class ChooseBest:
@@ -186,6 +186,6 @@ class ChooseBest:
         sorted_scores : list of tuples 
             Only the top self._k tuples like (model, score) with the best score
         """
-        model_scores = [inp.return_val for inp in pipeline_data]
+        model_scores = [inp for inp in pipeline_data.return_val] # model_score = pipeline_data.return_val
         sorted_scores = sorted(model_scores, key=operator.attrgetter('score'))
-        return PipelineData(None, sorted_scores[:self._k])
+        return PipelineData(pipeline_data.dataset, sorted_scores[:self._k])

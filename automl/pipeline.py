@@ -131,7 +131,7 @@ class LocalExecutor:
             for step in tqdm(pipeline.steps):
                 self._log.info(f"Running step '{step.name}'")
                 if step.is_model_space_functor():
-                    pipeline_data = [step(pipeline_data, model_and_params)
+                    pipeline_data.return_val = [step(pipeline_data, model_and_params)
                                    for model_and_params in self._context.model_space]
                 else:
                     pipeline_data = step(pipeline_data, self._context)
