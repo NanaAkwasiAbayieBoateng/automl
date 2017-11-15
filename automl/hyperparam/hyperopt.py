@@ -37,5 +37,5 @@ class Hyperopt(ModelSpaceFunctor):
         result = HyperparameterSearchResult(best,
                                             best_loss,
                                             self._trials)
-        return PipelineData(pipeline_data.dataset, result)
+        return result
 
