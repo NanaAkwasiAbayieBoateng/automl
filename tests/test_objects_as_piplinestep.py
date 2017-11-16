@@ -69,7 +69,7 @@ class TestSearchPipeline(unittest.TestCase):
         data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
         context, pipeline_data = LocalExecutor(data, 10) << (Pipeline() >> 
             PipelineStep('model space', ModelSpace(model_list)) >>
-            PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*'])) >>
+            PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*', '/'])) >>
             PipelineStep('cv', Validate(test_size=0.33, metrics=mean_absolute_error)) >>
             PipelineStep('choose', ChooseBest(3)) >>
             PipelineStep('selection', FeatureSelector(30)))
