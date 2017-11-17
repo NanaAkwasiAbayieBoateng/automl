@@ -43,6 +43,7 @@ class PipelineStep:
                                                    **self._kwargs)
                 return self._cached_response
             else:
+                self._log.info(f"Initializer step {self.name} was already run, skipping")
                 return self._cached_response
         else:
             return self._func(pipe_input, context, *self._args, **self._kwargs)

@@ -60,6 +60,7 @@ class FormulaFeatureGenerator:
 
         used_func : set of of symbols of functions
         """
+        self._log = logging.getLogger(self.__class__.__name__)
         self.used_func = set(func_list)
         self._func_map = {
             '+': self._sum,
@@ -170,6 +171,7 @@ class FormulaFeatureGenerator:
         XF : numpy array of shape [n_samples, n_features+limit]
             Transformed array.
         """
+        orig_feature_num = pipeline_data.dataset.data.shape[1]
         if not isinstance(pipeline_data.dataset, np.ndarray):
             X = np.array(pipeline_data.dataset.data)
         else:
@@ -179,6 +181,9 @@ class FormulaFeatureGenerator:
             X = self._func_map[random.sample(self.used_func, 1)[0]](X)
 
         pipeline_data.dataset.data = X
+        self._log.info((f"Generated new features. Old feature number - "
+                        f"{orig_feature_num}, new feature number - "
+                        f"{X.shape[1]}"))
         return pipeline_data 
 
 
