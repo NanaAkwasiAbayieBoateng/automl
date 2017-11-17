@@ -43,6 +43,7 @@ class PipelineStep:
                                                    **self._kwargs)
                 return self._cached_response
             else:
+                self._log.info(f"Initializer step {self.name} was already run, skipping")
                 return self._cached_response
         else:
             return self._func(pipe_input, context, *self._args, **self._kwargs)
@@ -131,8 +132,20 @@ class LocalExecutor:
             for step in tqdm(pipeline.steps):
                 self._log.info(f"Running step '{step.name}'")
                 if step.is_model_space_functor():
+                    # result = []
+                    # for model_and_params in self._context.model_space:
+                    #     step_return = step(pipeline_data, model_and_params)
+                    #     result.append(step_return)
+                    #     print('='*20)
+                    #     print(f"{step.name}, {model_and_params}")
+                    #     print(f"RESULT - {step_return.model}")
+                        
+                    #     print('='*20)
+                    
+                    # pipeline_data.return_val = result
                     pipeline_data.return_val = [step(pipeline_data, model_and_params)
-                                   for model_and_params in self._context.model_space]
+                                  for model_and_params in self._context.model_space]
+                    
                 else:
                     pipeline_data = step(pipeline_data, self._context)
         

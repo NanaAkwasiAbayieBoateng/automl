@@ -34,7 +34,7 @@ class TestModel(unittest.TestCase):
 
         cv = CV('accuracy', n_folds=5)
         self.assertAlmostEqual(
-                1 - cv(dataset, (RandomForestClassifier, {'random_state': 1})).score,
+                cv(dataset, (RandomForestClassifier, {'random_state': 1})).score,
             cross_val_score(
                 RandomForestClassifier(random_state=1),
                 dataset.dataset.data,

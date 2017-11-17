@@ -1,5 +1,6 @@
 import multiprocessing
 import operator
+import logging
 import numpy as np
 
 from sklearn.cross_validation import cross_val_score
@@ -20,6 +21,7 @@ class ModelSpace:
     """
 
     def __init__(self, model_list):
+        self._log = logging.getLogger(self.__class__.__name__)
         self._model_list = model_list
 
     def __call__(self, pipeline_data, context):
@@ -53,10 +55,9 @@ class CV(ModelSpaceFunctor):
     """
     Class for cross-validation step in pipeline
     """
-    def __init__(self, scoring, n_folds=3, n_jobs=None, reverse_score=True):
+    def __init__(self, scoring, n_folds=3, n_jobs=None):
         self._n_folds = n_folds
         self._scoring = scoring
-        self._reverse_score = reverse_score
 
         if n_jobs is None:
             self._n_jobs = multiprocessing.cpu_count()
@@ -82,8 +83,7 @@ class CV(ModelSpaceFunctor):
                cv=self._n_folds,
                n_jobs=self._n_jobs,
                scoring=self._scoring)
-        if self._reverse_score:
-            cv_score = 1 - cv_score
+
         result = ValidationResult(model, params, np.mean(cv_score))
         return result
 
@@ -93,7 +93,7 @@ class Validate(ModelSpaceFunctor):
     Class for validation step in pipeline with using user metrics
     """
 
-    def __init__(self, test_size, metrics):
+    def __init__(self, test_size, metrics, stratify=False):
         """
         Parametrs
         ---------
@@ -107,6 +107,7 @@ class Validate(ModelSpaceFunctor):
         """
         self._test_size = test_size
         self._metrics = metrics
+        self._stratify = stratify
 
     def __call__(self, pipeline_data, context, hparams=None):
         """
@@ -138,15 +139,20 @@ class Validate(ModelSpaceFunctor):
         else:
             params = model_params
         model = model(**params) 
+        
+        stratify = None
+        if self._stratify:
+            stratify = pipeline_data.dataset.target
 
         X_train, X_test, y_train, y_test = train_test_split(
             pipeline_data.dataset.data,
             pipeline_data.dataset.target,
             test_size=self._test_size,
+            stratify=stratify,
             random_state=42)
 
         model.fit(X_train, y_train)
-        val_score = self._metrics(model.predict(X_test), y_test)
+        val_score = self._metrics(y_test, model.predict(X_test))
         result = ValidationResult(model, params, val_score)
         return result
 
@@ -156,14 +162,16 @@ class ChooseBest:
     Chooses best model by scores on CV or Validation step in pipeline
     """
 
-    def __init__(self, k):
+    def __init__(self, k, by_largest_score=True):
         """
         Parametrs
         ---------
         k : int
             Number of models for choice
         """
+        self._log = logging.getLogger(self.__class__.__name__)
         self._k = k
+        self._by_largest = by_largest_score
 
     def __call__(self, pipeline_data, context):
         """
@@ -186,6 +194,9 @@ class ChooseBest:
         sorted_scores : list of tuples 
             Only the top self._k tuples like (model, score) with the best score
         """
-        model_scores = [inp for inp in pipeline_data.return_val] # model_score = pipeline_data.return_val
-        sorted_scores = sorted(model_scores, key=operator.attrgetter('score'))
+        model_scores = [inp for inp in pipeline_data.return_val]
+        sorted_scores = sorted(model_scores, key=operator.attrgetter('score'),
+                               reverse=self._by_largest)
+        self._log.info("Final model scores:")
+        self._log.info(sorted_scores)
         return PipelineData(pipeline_data.dataset, sorted_scores[:self._k])
