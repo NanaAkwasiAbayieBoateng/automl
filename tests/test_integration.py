@@ -16,7 +16,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.metrics import accuracy_score, mean_absolute_error, roc_auc_score
+from sklearn.metrics import accuracy_score, mean_absolute_error, roc_auc_score, mean_squared_error
 
 from xgboost.sklearn import XGBClassifier
 
@@ -82,7 +82,7 @@ class IntegrationTests(unittest.TestCase):
         context, pipeline_data = LocalExecutor(data, 10) << (Pipeline() >> 
             PipelineStep('model space', ModelSpace(model_list)) >>
             PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*'])) >>
-            PipelineStep('cv', Validate(test_size=0.33, metrics=roc_auc_score)) >>
+            PipelineStep('cv', Validate(test_size=0.33, metrics=mean_squared_error)) >>
             PipelineStep('choose', ChooseBest(3)) >>
             PipelineStep('selection', FeatureSelector(30)))
 
@@ -95,7 +95,7 @@ class IntegrationTests(unittest.TestCase):
 
     def test_pipeline_hyperopt(self):
         x, y = make_classification(
-            n_samples=1000,
+            n_samples=100,
             n_features=40,
             n_informative=2,
             n_redundant=10,
@@ -109,11 +109,11 @@ class IntegrationTests(unittest.TestCase):
         ]
 
         data = Dataset(x, y)
-        context, pipeline_data = LocalExecutor(data, 3) << (Pipeline() >> 
+        context, pipeline_data = LocalExecutor(data, 2) << (Pipeline() >> 
             PipelineStep('model space', ModelSpace(model_list), initializer=True) >>
             PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*'])) >>
             PipelineStep('H', Hyperopt(Validate(test_size=0.1, metrics=roc_auc_score), 
-                                                max_evals=20)) >>
+                                                max_evals=2)) >>
             PipelineStep('choose', ChooseBest(1)) 
             >> PipelineStep('selection', FeatureSelector(10))
             )

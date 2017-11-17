@@ -93,7 +93,7 @@ class Validate(ModelSpaceFunctor):
     Class for validation step in pipeline with using user metrics
     """
 
-    def __init__(self, test_size, metrics):
+    def __init__(self, test_size, metrics, stratify=False):
         """
         Parametrs
         ---------
@@ -107,6 +107,7 @@ class Validate(ModelSpaceFunctor):
         """
         self._test_size = test_size
         self._metrics = metrics
+        self._stratify = stratify
 
     def __call__(self, pipeline_data, context, hparams=None):
         """
@@ -138,12 +139,16 @@ class Validate(ModelSpaceFunctor):
         else:
             params = model_params
         model = model(**params) 
+        
+        stratify = None
+        if self._stratify:
+            stratify = pipeline_data.dataset.target
 
         X_train, X_test, y_train, y_test = train_test_split(
             pipeline_data.dataset.data,
             pipeline_data.dataset.target,
             test_size=self._test_size,
-            stratify=pipeline_data.dataset.target,
+            stratify=stratify,
             random_state=42)
 
         model.fit(X_train, y_train)
