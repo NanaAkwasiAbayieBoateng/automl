@@ -55,7 +55,7 @@ class CV(ModelSpaceFunctor):
     """
     Class for cross-validation step in pipeline
     """
-    def __init__(self, scoring, n_folds=3, n_jobs=None):
+    def __init__(self, scoring, n_folds=3, n_jobs=-1):
         self._n_folds = n_folds
         self._scoring = scoring
 
@@ -198,5 +198,6 @@ class ChooseBest:
         sorted_scores = sorted(model_scores, key=operator.attrgetter('score'),
                                reverse=self._by_largest)
         self._log.info("Final model scores:")
-        self._log.info(sorted_scores)
+        for model_score in sorted_scores:
+            self._log.info(f"{model_score.model} - {model_score.score}")
         return PipelineData(pipeline_data.dataset, sorted_scores[:self._k])

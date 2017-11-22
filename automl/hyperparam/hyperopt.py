@@ -50,7 +50,7 @@ class Hyperopt(ModelSpaceFunctor):
 
         if self._reverse_score:
             self._log.info("Reversing best score bask to original form as reverse_score=True")
-            best_score = 1 - sorted(trials.losses())[-1]
+            best_score = 1 - sorted(trials.losses())[0]
         else:
             best_score = sorted(trials.losses())[0]
 
