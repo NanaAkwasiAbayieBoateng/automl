@@ -1,5 +1,3 @@
-"""Feature Generators"""
-
 import logging
 from functools import partial
 import random

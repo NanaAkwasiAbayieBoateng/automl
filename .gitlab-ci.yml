@@ -5,6 +5,7 @@ before_script:
     - pip install -e .
     - pip install pytest pytest-cov
     - cd / && git clone --recursive https://github.com/dmlc/xgboost && cd /xgboost && make -j4 && cd python-package && python setup.py install
+    - cd / && git clone https://github.com/liftoff/pyminifier.git && cd /pyminifier && pip install -e .
     - cd $CI_PROJECT_DIR
 
 stages:

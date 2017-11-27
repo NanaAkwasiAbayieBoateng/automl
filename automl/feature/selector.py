@@ -1,4 +1,3 @@
-"""Feature Selector"""
 import logging
 from automl.pipeline import PipelineData
 

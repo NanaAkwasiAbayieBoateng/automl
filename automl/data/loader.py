@@ -1,5 +1,3 @@
-"""Dataset loaders"""
-
 import logging
 from urllib.parse import urlparse
 
