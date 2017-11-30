@@ -82,8 +82,13 @@ class RecursiveFeatureSelector:
 
         if hasattr(model, "coef_") or hasattr(model, "feature_importances_",):       
             selector = RFE(model, self.n_features_to_select, self.step, self.verbose)
+            assert(list(selector.get_params()['estimator'].get_params().values()) == list(model.get_params().values()))
             pipeline_data.dataset.data = selector.fit_transform(pipeline_data.dataset.data, pipeline_data.dataset.target)
         else:
             self._log.warn(f"Estimator {model.__class__.__name__} must have coef_ or feature_importances_ attribute")
         
         return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
+
+
+class VotingFeatureSelector:
+    pass
