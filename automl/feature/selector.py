@@ -63,3 +63,32 @@ class FeatureSelector:
             pipeline_data.dataset.data = pipeline_data.dataset.data.compress(mask, axis=1)
 
         return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
+
+class VotingFeatureSelector:
+    def __init__(self):
+        pass
+    
+    def __call__(self, pipeline_data, context):
+        vote = np.zeros((1, pipeline_data.dataset.data.shape[1]))
+        for value in pipeline_data.return_val:
+            model = value.model
+            model_score = np.array(value.score)
+
+            if hasattr(model, "coef_"):
+                f_score = [abs(coef) for coef in model.coef_]
+            elif hasattr(model, "feature_importances_",):
+                f_score = [abs(feature_importances) for feature_importances in model.feature_importances_]
+            else: 
+                f_score = None
+
+            if f_score is not None:
+                print('='*30)
+                print(vote)
+                print(f_score)
+                print(model_score, '#'*30)
+                print(f_score*model_score)
+                vote = vote + f_score*model_score
+                print(type(f_score))
+
+
+        

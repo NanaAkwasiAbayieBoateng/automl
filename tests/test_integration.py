@@ -3,7 +3,7 @@ import logging
 from automl.pipeline import LocalExecutor, Pipeline, PipelineStep
 from automl.data.dataset import Dataset
 from automl.model import ModelSpace, Validate, CV, ChooseBest
-from automl.feature.selector import FeatureSelector
+from automl.feature.selector import FeatureSelector, VotingFeatureSelector
 from automl.feature.generators import FormulaFeatureGenerator
 from automl.hyperparam.hyperopt import Hyperopt
 from automl.hyperparam.templates import random_forest_hp_space, knn_hp_space, svc_hp_space, grad_boosting_hp_space, xgboost_hp_space
@@ -124,3 +124,28 @@ class IntegrationTests(unittest.TestCase):
         print(pipeline_data.dataset.data.shape)
         print('0'*30)
 
+    def test_voting_feature_selector(self):
+        x, y = make_classification(
+            n_samples=100,
+            n_features=40,
+            n_informative=2,
+            n_redundant=10,
+            flip_y=0.05
+        )
+
+        model_list = [
+            (RandomForestClassifier, {}),
+            (GradientBoostingClassifier, {}),
+            (SVC, {}),
+            (KNeighborsClassifier, {}),
+            (XGBClassifier, {})
+        ]
+
+        data = Dataset(x, y)
+        context, pipeline_data = LocalExecutor(data, 1) << (Pipeline()
+            >> PipelineStep('model space', ModelSpace(model_list), initializer=True)
+            >> FormulaFeatureGenerator(['+', '-', '*', '/'])
+            >> Validate(test_size=0.1, metrics=roc_auc_score)
+            >> ChooseBest(5)
+            >> VotingFeatureSelector()
+        )
