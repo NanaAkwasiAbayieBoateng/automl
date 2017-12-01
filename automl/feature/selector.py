@@ -4,6 +4,8 @@ from automl.pipeline import PipelineData
 
 import numpy as np
 
+from sklearn.feature_selection import RFE
+
 class FeatureSelector:
     """
     Class for feature selection step in pipeline 
@@ -63,3 +65,30 @@ class FeatureSelector:
             pipeline_data.dataset.data = pipeline_data.dataset.data.compress(mask, axis=1)
 
         return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
+
+
+class RecursiveFeatureSelector:
+    def __init__(self, n_features_to_select=None, step=1, verbose=0):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self.n_features_to_select = n_features_to_select
+        self.step = step
+        self.verbose = verbose
+
+    def __call__(self, pipeline_data, context):
+        if len(pipeline_data.return_val)>1:
+            raise ValueError("Recurcive Feature Selector must be used with ChooseBest(1)")
+
+        model = pipeline_data.return_val[0].model
+
+        if hasattr(model, "coef_") or hasattr(model, "feature_importances_",):       
+            selector = RFE(model, self.n_features_to_select, self.step, self.verbose)
+            assert(list(selector.get_params()['estimator'].get_params().values()) == list(model.get_params().values()))
+            pipeline_data.dataset.data = selector.fit_transform(pipeline_data.dataset.data, pipeline_data.dataset.target)
+        else:
+            self._log.warn(f"Estimator {model.__class__.__name__} must have coef_ or feature_importances_ attribute")
+        
+        return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
+
+
+class VotingFeatureSelector:
+    pass

@@ -383,7 +383,7 @@ def svc_sigmoid_hp_space(name, **kwargs):
     return svc_kernel_hp_space(name, kernel='sigmoid', **kwargs)
 
 
-def svc_hp_space(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
+def svc_hp_space(kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
     svms = {
         'linear': partial(svc_linear_hp_space, name='svc'),
         'rbf': partial(svc_rbf_hp_space, name='svc'),
