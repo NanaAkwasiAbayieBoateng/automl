@@ -7,7 +7,7 @@ from automl.model import ModelSpace, Validate, CV, ChooseBest
 from automl.feature.selector import FeatureSelector, RecursiveFeatureSelector
 from automl.feature.generators import FormulaFeatureGenerator
 from automl.hyperparam.hyperopt import Hyperopt
-from automl.hyperparam.templates import random_forest_hp_space, knn_hp_space, svc_hp_space, grad_boosting_hp_space, xgboost_hp_space
+from automl.hyperparam.templates import random_forest_hp_space, knn_hp_space, svc_kernel_hp_space, grad_boosting_hp_space, xgboost_hp_space
 
 from sklearn import datasets
 from sklearn.datasets import make_classification
@@ -104,7 +104,7 @@ class IntegrationTests(unittest.TestCase):
         model_list = [
             (RandomForestClassifier, random_forest_hp_space()),
                 (GradientBoostingClassifier, grad_boosting_hp_space()),
-            (SVC, svc_hp_space()),
+            (SVC, svc_kernel_hp_space('rbf')),
             (KNeighborsClassifier, knn_hp_space()),
             (XGBClassifier, xgboost_hp_space())
         ]
