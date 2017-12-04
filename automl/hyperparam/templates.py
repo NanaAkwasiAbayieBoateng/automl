@@ -383,18 +383,18 @@ def svc_sigmoid_hp_space(name, **kwargs):
     return svc_kernel_hp_space(name, kernel='sigmoid', **kwargs)
 
 
-def svc_hp_space(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
+def svc_hp_space(kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
     svms = {
-        'linear': partial(svc_linear_hp_space, name=name),
-        'rbf': partial(svc_rbf_hp_space, name=name),
-        'poly': partial(svc_poly_hp_space, name=name),
-        'sigmoid': partial(svc_sigmoid_hp_space, name=name),
+        'linear': partial(svc_linear_hp_space, name='svc'),
+        'rbf': partial(svc_rbf_hp_space, name='svc'),
+        'poly': partial(svc_poly_hp_space, name='svc'),
+        'sigmoid': partial(svc_sigmoid_hp_space, name='svc'),
     }
     choices = [svms[kern](**kwargs) for kern in kernels]
     if len(choices) == 1:
         rval = choices[0]
     else:
-        rval = hp.choice('%s.kernel' % name, choices)
+        rval = hp.choice('kernel', choices)
     return rval
 
 
@@ -447,18 +447,18 @@ def svr_sigmoid_hp_space(name, **kwargs):
     return svr_kernel_hp_space(name, kernel='sigmoid', **kwargs)
 
 
-def svr_hp_space(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
+def svr_hp_space(kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
     svms = {
-        'linear': partial(svr_linear_hp_space, name=name),
-        'rbf': partial(svr_rbf_hp_space, name=name),
-        'poly': partial(svr_poly_hp_space, name=name),
-        'sigmoid': partial(svr_sigmoid_hp_space, name=name),
+        'linear': partial(svr_linear_hp_space, name='svr'),
+        'rbf': partial(svr_rbf_hp_space, name='svr'),
+        'poly': partial(svr_poly_hp_space, name='svr'),
+        'sigmoid': partial(svr_sigmoid_hp_space, name='svr'),
     }
     choices = [svms[kern](**kwargs) for kern in kernels]
     if len(choices) == 1:
         rval = choices[0]
     else:
-        rval = hp.choice('%s.kernel' % name, choices)
+        rval = hp.choice('kernel', choices)
     return rval
 
 
@@ -466,8 +466,7 @@ def svr_hp_space(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
 ##############################################
 ##==== KNN hyperparameters search space ====##
 ##############################################
-def knn_hp_space(name_func,
-                 sparse_data=False,
+def knn_hp_space(sparse_data=False,
                  n_neighbors=None,
                  weights=None,
                  algorithm='auto',
@@ -478,11 +477,11 @@ def knn_hp_space(name_func,
                  n_jobs=1):
     '''Generate KNN hyperparameters search space
     '''
-    metric_p = _knn_metric_p(name_func('metric_p'), sparse_data, metric, p)
+    metric_p = _knn_metric_p('metric_p', sparse_data, metric, p)
     hp_space = dict(
-        n_neighbors=(_knn_neighbors(name_func('neighbors'))
+        n_neighbors=(_knn_neighbors('neighbors')
                      if n_neighbors is None else n_neighbors),
-        weights=(_knn_weights(name_func('weights'))
+        weights=(_knn_weights('weights')
                  if weights is None else weights),
         algorithm=algorithm,
         leaf_size=leaf_size,
@@ -555,8 +554,7 @@ def random_forest_hp_space(criterion='gini', **kwargs):
 ###################################################
 ##==== AdaBoost hyperparameters search space ====##
 ###################################################
-def ada_boost_hp_space(name_func,
-                       base_estimator=None,
+def ada_boost_hp_space(base_estimator=None,
                        n_estimators=None,
                        learning_rate=None,
                        random_state=None):
@@ -564,19 +562,18 @@ def ada_boost_hp_space(name_func,
     '''
     hp_space = dict(
         base_estimator=base_estimator,
-        n_estimators=(_boosting_n_estimators(name_func('n_estimators'))
+        n_estimators=(_boosting_n_estimators('n_estimators')
                       if n_estimators is None else n_estimators),
-        learning_rate=(_ada_boost_learning_rate(name_func('learning_rate'))
+        learning_rate=(_ada_boost_learning_rate('learning_rate')
                        if learning_rate is None else learning_rate),
-        random_state=_random_state(name_func('rstate'), random_state))
+        random_state=_random_state('rstate', random_state))
     return hp_space
 
 
 ###########################################################
 ##==== GradientBoosting hyperparameters search space ====##
 ###########################################################
-def grad_boosting_hp_space(name_func,
-                           learning_rate=None,
+def grad_boosting_hp_space(learning_rate=None,
                            n_estimators=None,
                            subsample=None,
                            min_samples_split=None,
@@ -592,24 +589,21 @@ def grad_boosting_hp_space(name_func,
     '''Generate GradientBoosting hyperparameters search space
     '''
     hp_space = dict(
-        learning_rate=(_grad_boosting_learning_rate(
-            name_func('learning_rate'))
-                       if learning_rate is None else learning_rate),
-        n_estimators=(_boosting_n_estimators(name_func('n_estimators'))
-                      if n_estimators is None else n_estimators),
-        subsample=(_grad_boosting_subsample(name_func('subsample'))
-                   if subsample is None else subsample),
-        min_samples_split=(_trees_min_samples_split(
-            name_func('min_samples_split')) if min_samples_split is None else
-                           min_samples_split),
-        min_samples_leaf=(_trees_min_samples_leaf(
-            name_func('min_samples_leaf'))
-                          if min_samples_leaf is None else min_samples_leaf),
-        max_depth=(_trees_max_depth(name_func('max_depth'))
-                   if max_depth is None else max_depth),
+        learning_rate=(_grad_boosting_learning_rate('learning_rate')
+                        if learning_rate is None else learning_rate),
+        n_estimators=(_boosting_n_estimators('n_estimators')
+                        if n_estimators is None else n_estimators),
+        subsample=(_grad_boosting_subsample('subsample')
+                        if subsample is None else subsample),
+        min_samples_split=(_trees_min_samples_split('min_samples_split')
+                        if min_samples_split is None else min_samples_split),
+        min_samples_leaf=(_trees_min_samples_leaf('min_samples_leaf')
+                        if min_samples_leaf is None else min_samples_leaf),
+        max_depth=(_trees_max_depth('max_depth')
+                        if max_depth is None else max_depth),
         init=init,
-        random_state=_random_state(name_func('rstate'), random_state),
-        max_features=(_trees_max_features(name_func('max_features'))
+        random_state=_random_state('rstate', random_state),
+        max_features=(_trees_max_features('max_features')
                       if max_features is None else max_features),
         warm_start=warm_start,
         presort=presort)
@@ -747,8 +741,7 @@ def passive_aggressive_hp_space(loss=None,
 ###############################################
 ##==== Discriminant analysis classifiers ====##
 ###############################################
-def linear_discriminant_analysis_hp_space(name,
-                                          solver=None,
+def linear_discriminant_analysis_hp_space(solver=None,
                                           shrinkage=None,
                                           priors=None,
                                           n_components=None,

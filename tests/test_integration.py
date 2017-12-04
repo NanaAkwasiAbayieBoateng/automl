@@ -1,9 +1,10 @@
 import unittest
 import logging
+import random
 from automl.pipeline import LocalExecutor, Pipeline, PipelineStep
 from automl.data.dataset import Dataset
 from automl.model import ModelSpace, Validate, CV, ChooseBest
-from automl.feature.selector import FeatureSelector
+from automl.feature.selector import FeatureSelector, RecursiveFeatureSelector
 from automl.feature.generators import FormulaFeatureGenerator
 from automl.hyperparam.hyperopt import Hyperopt
 from automl.hyperparam.templates import random_forest_hp_space, knn_hp_space, svc_hp_space, grad_boosting_hp_space, xgboost_hp_space
@@ -102,9 +103,9 @@ class IntegrationTests(unittest.TestCase):
             flip_y=0.05)
         model_list = [
             (RandomForestClassifier, random_forest_hp_space()),
-            #(GradientBoostingClassifier, grad_boosting_hp_space(lambda key: key)),
-            #(SVC, svc_hp_space('name')),
-            (KNeighborsClassifier, knn_hp_space(lambda key: key)),
+                (GradientBoostingClassifier, grad_boosting_hp_space()),
+            (SVC, svc_hp_space()),
+            (KNeighborsClassifier, knn_hp_space()),
             (XGBClassifier, xgboost_hp_space())
         ]
 
@@ -124,3 +125,33 @@ class IntegrationTests(unittest.TestCase):
         print(pipeline_data.dataset.data.shape)
         print('0'*30)
 
+    def test_RFE(self):
+        x, y = make_classification(
+            n_samples=100,
+            n_features=40,
+            n_informative=2,
+            n_redundant=10,
+            flip_y=0.05
+        )
+
+        model_list = [
+            (RandomForestClassifier, {}),
+            (GradientBoostingClassifier, {}),
+            (SVC, {}),
+            (KNeighborsClassifier, {}),
+            (XGBClassifier, {})
+        ]
+
+        n_features_to_select = random.randint(5, 30)
+
+        data = Dataset(x, y)
+        context, pipeline_data = LocalExecutor(data, 2) << (Pipeline() >> 
+            PipelineStep('model space', ModelSpace(model_list), initializer=True) >>
+            PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*', '/'])) >>
+            PipelineStep('Validate', Validate(test_size=0.1, metrics=roc_auc_score)) >>
+            PipelineStep('choose', ChooseBest(1)) >>
+            PipelineStep('selection', RecursiveFeatureSelector(n_features_to_select=n_features_to_select))
+        )
+
+
+    
