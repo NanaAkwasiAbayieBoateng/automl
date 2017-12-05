@@ -4,6 +4,9 @@ from automl.pipeline import PipelineData
 
 import numpy as np
 
+def softmax(x):
+    return np.exp(x)/np.sum(np.exp(x))
+
 class FeatureSelector:
     """
     Class for feature selection step in pipeline 
@@ -64,31 +67,90 @@ class FeatureSelector:
 
         return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
 
-class VotingFeatureSelector:
-    def __init__(self):
-        pass
+class VotingFeatureSelector_mult:
+    def __init__(self, feature_to_select=None):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self.feature_to_select = feature_to_select
     
     def __call__(self, pipeline_data, context):
-        vote = np.zeros((1, pipeline_data.dataset.data.shape[1]))
+        vote = []
+        model_scores = []
+        
         for value in pipeline_data.return_val:
             model = value.model
-            model_score = np.array(value.score)
 
             if hasattr(model, "coef_"):
-                f_score = [abs(coef) for coef in model.coef_]
+                f_score = np.array([abs(coef) for coef in model.coef_])
             elif hasattr(model, "feature_importances_",):
-                f_score = [abs(feature_importances) for feature_importances in model.feature_importances_]
+                f_score = np.array([abs(feature_importances) for feature_importances in model.feature_importances_])
             else: 
                 f_score = None
 
             if f_score is not None:
-                print('='*30)
-                print(vote)
-                print(f_score)
-                print(model_score, '#'*30)
-                print(f_score*model_score)
-                vote = vote + f_score*model_score
-                print(type(f_score))
+                self._log.info('***'*50)
+                self._log.info(model.__class__.__name__)
+                vote.append(f_score)
+                model_scores.append(value.score)
+                #self._log.info(len(model_scores), len(vote), 'asdf'*20)
+        model_scores_delete = model_scores
+        model_scores = softmax(np.array(model_scores))
+
+        weights = np.zeros(vote[0].shape[0])
+        
+        for f_score, model_score in zip(vote, model_scores):
+            weights = weights+softmax(np.array(f_score))*model_score
+        #raise ValueError()
+        threshold = sorted(weights)[-self.feature_to_select]
+        mask = [score >= threshold for score in weights]
+
+        #if mask.sum():
+        pipeline_data.dataset.data = pipeline_data.dataset.data.compress(mask, axis=1)
+
+        return PipelineData(pipeline_data.dataset, pipeline_data.return_val)        
+        
+
+class VotingFeatureSelector_div:
+    def __init__(self, feature_to_select=None):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self.feature_to_select = feature_to_select
+    
+    def __call__(self, pipeline_data, context):
+        vote = []
+        model_scores = []
+        
+        for value in pipeline_data.return_val:
+            model = value.model
+
+            if hasattr(model, "coef_"):
+                f_score = np.array([abs(coef) for coef in model.coef_])
+            elif hasattr(model, "feature_importances_",):
+                f_score = np.array([abs(feature_importances) for feature_importances in model.feature_importances_])
+            else: 
+                f_score = None
+
+            if f_score is not None:
+                self._log.info('***'*50)
+                self._log.info(model.__class__.__name__)
+                vote.append(f_score)
+                model_scores.append(value.score)
+                #self._log.info(len(model_scores), len(vote), 'asdf'*20)
+        model_scores_delete = model_scores
+        model_scores = softmax(np.array(model_scores))
+
+        weights = np.zeros(vote[0].shape[0])
+        
+        for f_score, model_score in zip(vote, model_scores):
+            weights = weights+softmax(np.array(f_score))/model_score
+        #raise ValueError()
+        threshold = sorted(weights)[-self.feature_to_select]
+        mask = [score >= threshold for score in weights]
+
+        #if mask.sum():
+        pipeline_data.dataset.data = pipeline_data.dataset.data.compress(mask, axis=1)
+
+        return PipelineData(pipeline_data.dataset, pipeline_data.return_val)        
+        
+
 
 
         

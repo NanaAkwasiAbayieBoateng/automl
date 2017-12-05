@@ -172,7 +172,7 @@ class FormulaFeatureGenerator:
         """
         orig_feature_num = pipeline_data.dataset.data.shape[1]
         if not isinstance(pipeline_data.dataset, np.ndarray):
-            X = np.array(pipeline_data.dataset.data)
+            X = np.array(pipeline_data.dataset.data, dtype='f') #we need dtype=float32 dataset
         else:
             X = pipeline_data.dataset.data
 
