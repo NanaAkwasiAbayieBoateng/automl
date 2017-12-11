@@ -2,6 +2,9 @@ class Dataset:
     def __init__(self, data, target):
         self.data = data
         self.target = target
+        self.meta = [{"name": f"feature_{i}", 
+                      "history" : str(i)} for i in range(0, data.shape[1])]
+
 
 
 class DatasetExtractor:
