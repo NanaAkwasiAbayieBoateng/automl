@@ -191,7 +191,7 @@ class FormulaFeatureGenerator:
                 pipeline_data.dataset.data = np.append(pipeline_data.dataset.data, new_feature, axis=1)
 
                 pipeline_data.dataset.meta.append({
-                    "name" : "name",
+                    "name" : "",
                     "history" : history
                 })
 
@@ -200,5 +200,19 @@ class FormulaFeatureGenerator:
                         f"{pipeline_data.dataset.data.shape[1]}"))
         return pipeline_data 
 
+class RecoveringFeatureGenerator:
+    def __init__(self):
+        self._log = logging.getLogger(self.__class__.__name__)
+
+    def __call__(self, pipeline_data, pipeline_context):
+        dataset = pipeline_data.dataset
+        data = dataset.data
+        for feature in dataset.meta:
+            if feature["name"] != "base_feature": 
+                explicit_locals = locals()
+                exec(f"new_feature = {feature['history']}", globals(), explicit_locals)
+                new_feature = explicit_locals["new_feature"]
+                np.append(data, new_feature)
+        return pipeline_data
 
 PolynomialGenerator = partial(SklearnFeatureGenerator, PolynomialFeatures)
