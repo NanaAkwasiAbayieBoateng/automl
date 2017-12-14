@@ -1,0 +1,28 @@
+image: python:3
+
+before_script:
+    - apt-get install -y git gcc g++ make
+    - pip install -e .
+    - pip install pytest pytest-cov
+    - cd / && git clone --recursive https://github.com/dmlc/xgboost && cd /xgboost && make -j4 && cd python-package && python setup.py install
+    - cd / && git clone https://github.com/liftoff/pyminifier.git && cd /pyminifier && pip install -e .
+    - cd $CI_PROJECT_DIR
+
+stages:
+    - test
+    - deploy
+
+test:
+    stage: test
+    script:
+        - PYTHONPATH=. pytest -v -l --cov=automl
+
+deploy:
+    stage: deploy
+    only:
+        - master
+    script:
+        - pip install awscli
+        - aws s3 cp . s3://onepanel-automl/automl --recursive
+    dependencies:
+        - test
