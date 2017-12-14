@@ -10,9 +10,19 @@ before_script:
 
 stages:
     - test
+    - deploy
 
-job:
+test:
     stage: test
     script:
         - PYTHONPATH=. pytest -v -l --cov=automl
 
+deploy:
+    stage: deploy
+    only:
+        - master
+    script:
+        - pip install awscli
+        - aws s3 cp ./dist s3://onepanel-automl --recursive
+    dependencies:
+        - build
