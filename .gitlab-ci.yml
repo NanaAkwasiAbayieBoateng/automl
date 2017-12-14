@@ -23,6 +23,6 @@ deploy:
         - master
     script:
         - pip install awscli
-        - aws s3 cp ./dist s3://onepanel-automl --recursive
+        - aws s3 cp . s3://onepanel-automl/automl --recursive
     dependencies:
         - build
