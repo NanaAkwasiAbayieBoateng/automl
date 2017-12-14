@@ -53,16 +53,17 @@ class FeatureSelector:
             else: 
                 f_score = None
 
-            if f_score is not None and pipeline_data.dataset.data.shape[1] > self.max_features:
-                threshold = sorted(f_score)[-self.max_features]
-                mask = mask + np.array([score > threshold for score in f_score])
-                self._log.info(f"Removing {sum(mask)} features for model {model.__class__.__name__}")
+            if f_score is not None:
+                if pipeline_data.dataset.data.shape[1] > self.max_features:
+                    threshold = sorted(f_score)[-self.max_features]
+                    mask = mask + np.array([score > threshold for score in f_score])
+                    self._log.info(f"Removing {sum(mask)} features for model {model.__class__.__name__}")
             else:
                 self._log.warn(f"Model {model.__class__.__name__} is not supported by FeatureSelector")
         
         if mask.sum():
             pipeline_data.dataset.data = pipeline_data.dataset.data.compress(mask, axis=1)
-
+            pipeline_data.dataset.meta = [feature for feature, informative in zip(pipeline_data.dataset.meta, mask) if informative]
         return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
 
 
