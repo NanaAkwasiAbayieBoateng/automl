@@ -2,10 +2,39 @@ import logging
 from functools import partial
 import random
 import numpy as np
+import itertools as it
 from sklearn.preprocessing import PolynomialFeatures
 from automl.pipeline import PipelineData
 
+class PolynomialFeatureGenerator:
+    def __init__(self, degree):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self.degree = degree
 
+    def __call__(self, pipeline_data, pipeline_context):
+        data = pipeline_data.dataset.data
+        meta = pipeline_data.dataset.meta
+        orig_feature_num = pipeline_data.dataset.data.shape[1]
+
+        sets_of_indices = list(set(tuple(sorted(indices)) for indices in it.product(range(0, orig_feature_num), repeat=self.degree)))
+
+        new_feature = np.ones((data.shape[0], 1))
+        history = ""
+        
+        for indices in sets_of_indices:
+            for index in indices:
+                new_feature = np.reshape(data[:, index], (data.shape[0], 1))*new_feature
+                history = f"data[:, {index}]*" + history
+            if np.isfinite(new_feature).all():
+                data = np.append(data, new_feature, axis=1)
+                meta.append({
+                        "name" : "",
+                        "history" : history[:-1] #drop last symbol
+                    })
+
+        pipeline_data.dataset.data = data
+        pipeline_data.dataset.meta = meta
+        return pipeline_data   
 
 
 class SklearnFeatureGenerator:
@@ -182,7 +211,7 @@ class FormulaFeatureGenerator:
             Transformed array.
         """
         orig_feature_num = pipeline_data.dataset.data.shape[1]
-        if not isinstance(pipeline_data.dataset, np.ndarray):
+        if not isinstance(pipeline_data.dataset.data, np.ndarray):
             pipeline_data.dataset.data = np.array(pipeline_data.dataset.data)
 
         for _ in range(0, limit):

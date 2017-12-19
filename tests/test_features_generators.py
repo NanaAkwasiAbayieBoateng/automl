@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import Mock
 import random
 
-from automl.feature.generators import SklearnFeatureGenerator, FormulaFeatureGenerator, RecoveringFeatureGenerator
+from automl.feature.generators import SklearnFeatureGenerator, FormulaFeatureGenerator, \
+RecoveringFeatureGenerator, PolynomialGenerator, PolynomialFeatureGenerator
 from automl.pipeline import PipelineContext, PipelineData, Pipeline, LocalExecutor
 from automl.data.dataset import Dataset
 from automl.model import Validate, ModelSpace, ChooseBest
@@ -52,7 +53,7 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         self.assertLessEqual(result_size,
                              np.array(features).shape[1] + limit)
 
-    def test_recovering_dataset(self):
+    def test_recovering_dataset_FFG(self):
         model_list = [
             (Lasso, {}),
             (Ridge, {}),
@@ -66,6 +67,28 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
             >> Validate(test_size=0.33, metrics=mean_squared_error) 
             >> ChooseBest(3) 
             >> FeatureSelector(30))
+
+        rec = RecoveringFeatureGenerator()
+        pipeline_data_rec = rec(pipeline_data, context)
+        self.assertEqual(pipeline_data.dataset.data.shape, pipeline_data_rec.dataset.data.shape)
+        self.assertTrue((pipeline_data_rec.dataset.data == pipeline_data.dataset.data).all())
+
+    def test_poly_gen(self):
+        model_list = [
+            (Lasso, {}),
+            (Ridge, {}),
+            (RandomForestRegressor, {})
+        ]
+
+        X, y = datasets.make_regression(n_features=5)
+
+        data = Dataset(X, y)
+        context, pipeline_data = LocalExecutor(data, 3) << (Pipeline() 
+            >> ModelSpace(model_list) 
+            >> PolynomialFeatureGenerator(degree=2) 
+            >> Validate(test_size=0.33, metrics=mean_squared_error) 
+            >> ChooseBest(1) 
+            >> FeatureSelector(5))
 
         rec = RecoveringFeatureGenerator()
         pipeline_data_rec = rec(pipeline_data, context)
