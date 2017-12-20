@@ -20,4 +20,4 @@ class TestTemplate(unittest.TestCase):
         data = Dataset(datasets.load_iris().data, datasets.load_iris().target)
         context, pipeline_data = LocalExecutor(data, 1) << (Pipeline() >> 
             PipelineStep('model space', ModelSpace(model_list)) >>
-            PipelineStep('H', Hyperopt(Validate(test_size=0.33, metrics=mean_absolute_error))))
+            PipelineStep('H', Hyperopt(Validate(test_size=0.33, metrics=mean_absolute_error), max_evals=2)))

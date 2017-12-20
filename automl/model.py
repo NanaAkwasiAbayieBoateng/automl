@@ -93,7 +93,7 @@ class Validate(ModelSpaceFunctor):
     Class for validation step in pipeline with using user metrics
     """
 
-    def __init__(self, test_size, metrics, stratify=False):
+    def __init__(self, test_size, metrics, stratify=False): #change to stratify=True
         """
         Parametrs
         ---------

@@ -19,6 +19,10 @@ try:
 except ImportError:
     xgboost = None
 
+
+def default_name_func(name):
+    return name
+
 ##############################
 ##==== Global variables ====##
 ##############################
@@ -255,8 +259,7 @@ def _class_weight(name):
 ##############################################
 ##==== SVM hyperparameters search space ====##
 ##############################################
-def _svm_hp_space(name_func,
-                  kernel,
+def _svm_hp_space(kernel,
                   n_features=1,
                   C=None,
                   gamma=None,
@@ -272,12 +275,12 @@ def _svm_hp_space(name_func,
     if kernel in ['linear', 'rbf', 'sigmoid']:
         degree_ = 1
     else:
-        degree_ = (_svm_degree(name_func('degree'))
+        degree_ = (_svm_degree('degree')
                    if degree is None else degree)
     if kernel in ['linear']:
         gamma_ = 'auto'
     else:
-        gamma_ = (_svm_gamma(name_func('gamma'), n_features=1)
+        gamma_ = (_svm_gamma('gamma', n_features=1)
                   if gamma is None else gamma)
         gamma_ /= n_features  # make gamma independent of n_features.
     if kernel in ['linear', 'rbf']:
@@ -285,14 +288,14 @@ def _svm_hp_space(name_func,
     elif coef0 is None:
         if kernel == 'poly':
             coef0_ = hp.pchoice(
-                name_func('coef0'),
+                'coef0',
                 [(0.3, 0),
-                 (0.7, gamma_ * hp.uniform(name_func('coef0val'), 0., 10.))])
+                 (0.7, gamma_ * hp.uniform('coef0val', 0., 10.))])
         elif kernel == 'sigmoid':
             coef0_ = hp.pchoice(
-                name_func('coef0'),
+                'coef0',
                 [(0.3, 0),
-                 (0.7, gamma_ * hp.uniform(name_func('coef0val'), -10., 10.))])
+                 (0.7, gamma_ * hp.uniform('coef0val', -10., 10.))])
         else:
             pass
     else:
@@ -300,34 +303,34 @@ def _svm_hp_space(name_func,
 
     hp_space = dict(
         kernel=kernel,
-        C=_svm_C(name_func('C')) if C is None else C,
+        C=_svm_C('C') if C is None else C,
         gamma=gamma_,
         coef0=coef0_,
         degree=degree_,
-        shrinking=(hp_bool(name_func('shrinking'))
+        shrinking=(hp_bool('shrinking')
                    if shrinking is None else shrinking),
-        tol=_svm_tol(name_func('tol')) if tol is None else tol,
-        max_iter=(_svm_max_iter(name_func('maxiter'))
+        tol=_svm_tol('tol') if tol is None else tol,
+        max_iter=(_svm_max_iter('maxiter')
                   if max_iter is None else max_iter),
         verbose=verbose,
         cache_size=cache_size)
     return hp_space
 
 
-def _svc_hp_space(name_func, random_state=None, probability=False):
+def _svc_hp_space(random_state=None, probability=False):
     '''Generate SVC specific hyperparamters
     '''
     hp_space = dict(
-        random_state=_random_state(name_func('rstate'), random_state),
+        random_state=_random_state('rstate', random_state),
         probability=probability)
     return hp_space
 
 
-def _svr_hp_space(name_func, epsilon=None):
+def _svr_hp_space(epsilon=None):
     '''Generate SVR specific hyperparamters
     '''
     hp_space = {}
-    hp_space['epsilon'] = (_svm_epsilon(name_func('epsilon'))
+    hp_space['epsilon'] = (_svm_epsilon('epsilon')
                            if epsilon is None else epsilon)
     return hp_space
 
@@ -335,134 +338,37 @@ def _svr_hp_space(name_func, epsilon=None):
 #########################################
 ##==== SVM classifier constructors ====##
 #########################################
-def svc_kernel_hp_space(name,
-                        kernel,
+def svc_kernel_hp_space(kernel,
                         random_state=None,
                         probability=False,
                         **kwargs):
     """
-    Return a pyll graph with hyperparamters that will construct
+    Return a hyperparamter template that will construct
     a sklearn.svm.SVC model with a user specified kernel.
-    See help(hpsklearn.components._svm_hp_space) for info on additional SVM
-    arguments.
+    Supported kernels: linear, rbf, poly and sigmoid
     """
 
-    def _name(msg):
-        return '%s.%s_%s' % (name, kernel, msg)
-
-    hp_space = _svm_hp_space(_name, kernel=kernel, **kwargs)
-    hp_space.update(_svc_hp_space(_name, random_state, probability))
+    hp_space = _svm_hp_space(kernel=kernel, **kwargs)
+    hp_space.update(_svc_hp_space(random_state, probability))
     return hp_space
 
-
-def svc_linear_hp_space(name, **kwargs):
-    '''Simply use the svc_kernel function with kernel fixed as linear to
-    return an SVC object.
-    '''
-    return svc_kernel_hp_space(name, kernel='linear', **kwargs)
-
-
-def svc_rbf_hp_space(name, **kwargs):
-    '''Simply use the svc_kernel function with kernel fixed as rbf to
-    return an SVC object.
-    '''
-    return svc_kernel_hp_space(name, kernel='rbf', **kwargs)
-
-
-def svc_poly_hp_space(name, **kwargs):
-    '''Simply use the svc_kernel function with kernel fixed as poly to
-    return an SVC object.
-    '''
-    return svc_kernel_hp_space(name, kernel='poly', **kwargs)
-
-
-def svc_sigmoid_hp_space(name, **kwargs):
-    '''Simply use the svc_kernel function with kernel fixed as sigmoid to
-    return an SVC object.
-    '''
-    return svc_kernel_hp_space(name, kernel='sigmoid', **kwargs)
-
-
-def svc_hp_space(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
-    svms = {
-        'linear': partial(svc_linear_hp_space, name='svc'),
-        'rbf': partial(svc_rbf_hp_space, name='svc'),
-        'poly': partial(svc_poly_hp_space, name='svc'),
-        'sigmoid': partial(svc_sigmoid_hp_space, name='svc'),
-    }
-    choices = [svms[kern](**kwargs) for kern in kernels]
-    if len(choices) == 1:
-        rval = choices[0]
-    else:
-        rval = hp.choice('kernel', choices)
-    return rval
 
 
 ########################################
 ##==== SVM regressor constructors ====##
 ########################################
-def svr_kernel_hp_space(name, kernel, epsilon=None, **kwargs):
+def svr_kernel_hp_space(kernel, epsilon=None, **kwargs):
     """
-    Return a pyll graph with hyperparamters that will construct
+    Return a hyperparamter template that will construct
     a sklearn.svm.SVR model with a user specified kernel.
-    Args:
-        epsilon([float]): tolerance on regression errors.
-    See help(hpsklearn.components._svm_hp_space) for info on additional SVM
-    arguments.
+    Supported kernels: linear, rbf, poly and sigmoid
     """
 
-    def _name(msg):
-        return '%s.%s_%s' % (name, kernel, msg)
-
-    hp_space = _svm_hp_space(_name, kernel=kernel, **kwargs)
-    hp_space.update(_svr_hp_space(_name, epsilon))
+    hp_space = _svm_hp_space(kernel=kernel, **kwargs)
+    hp_space.update(_svr_hp_space(epsilon))
     return hp_space
 
 
-def svr_linear_hp_space(name, **kwargs):
-    '''Simply use the svr_kernel function with kernel fixed as linear to
-    return an SVR object.
-    '''
-    return svr_kernel_hp_space(name, kernel='linear', **kwargs)
-
-
-def svr_rbf_hp_space(name, **kwargs):
-    '''Simply use the svr_kernel function with kernel fixed as rbf to
-    return an SVR object.
-    '''
-    return svr_kernel_hp_space(name, kernel='rbf', **kwargs)
-
-
-def svr_poly_hp_space(name, **kwargs):
-    '''Simply use the svr_kernel function with kernel fixed as poly to
-    return an SVR object.
-    '''
-    return svr_kernel_hp_space(name, kernel='poly', **kwargs)
-
-
-def svr_sigmoid_hp_space(name, **kwargs):
-    '''Simply use the svr_kernel function with kernel fixed as sigmoid to
-    return an SVR object.
-    '''
-    return svr_kernel_hp_space(name, kernel='sigmoid', **kwargs)
-
-
-def svr_hp_space(kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
-    svms = {
-        'linear': partial(svr_linear_hp_space, name='svr'),
-        'rbf': partial(svr_rbf_hp_space, name='svr'),
-        'poly': partial(svr_poly_hp_space, name='svr'),
-        'sigmoid': partial(svr_sigmoid_hp_space, name='svr'),
-    }
-    choices = [svms[kern](**kwargs) for kern in kernels]
-    if len(choices) == 1:
-        rval = choices[0]
-    else:
-        rval = hp.choice('kernel', choices)
-    return rval
-
-
-## STOPPED WRAPPING HERE
 ##############################################
 ##==== KNN hyperparameters search space ====##
 ##############################################
@@ -495,8 +401,7 @@ def knn_hp_space(sparse_data=False,
 ####################################################################
 ##==== Random forest/extra trees hyperparameters search space ====##
 ####################################################################
-def trees_hp_space(name_func,
-                   n_estimators=None,
+def trees_hp_space(n_estimators=None,
                    max_features=None,
                    max_depth=None,
                    min_samples_split=None,
@@ -509,23 +414,23 @@ def trees_hp_space(name_func,
     '''Generate trees ensemble hyperparameters search space
     '''
     hp_space = dict(
-        n_estimators=(_trees_n_estimators(name_func('n_estimators'))
+        n_estimators=(_trees_n_estimators('n_estimators')
                       if n_estimators is None else n_estimators),
-        max_features=(_trees_max_features(name_func('max_features'))
+        max_features=(_trees_max_features('max_features')
                       if max_features is None else max_features),
-        max_depth=(_trees_max_depth(name_func('max_depth'))
+        max_depth=(_trees_max_depth('max_depth')
                    if max_depth is None else max_depth),
         min_samples_split=(_trees_min_samples_split(
-            name_func('min_samples_split')) if min_samples_split is None else
+            'min_samples_split') if min_samples_split is None else
                            min_samples_split),
         min_samples_leaf=(_trees_min_samples_leaf(
-            name_func('min_samples_leaf'))
+            'min_samples_leaf')
                           if min_samples_leaf is None else min_samples_leaf),
-        bootstrap=(_trees_bootstrap(name_func('bootstrap'))
+        bootstrap=(_trees_bootstrap('bootstrap')
                    if bootstrap is None else bootstrap),
         oob_score=oob_score,
         n_jobs=n_jobs,
-        random_state=_random_state(name_func('rstate'), random_state),
+        random_state=_random_state('rstate', random_state),
         verbose=verbose,
     )
     return hp_space
@@ -543,10 +448,7 @@ def random_forest_hp_space(criterion='gini', **kwargs):
         'gini' or 'entropy' and 'mse' for classification
     """
 
-    def _name(msg):
-        return '%s.%s_%s' % ("RandomForest", 'rfr', msg)
-
-    hp_space = trees_hp_space(_name, **kwargs)
+    hp_space = trees_hp_space(**kwargs)
     hp_space['criterion'] = criterion
     return hp_space
 
