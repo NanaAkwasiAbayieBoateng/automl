@@ -1,5 +1,11 @@
+import numpy as np
+
 class Dataset:
     def __init__(self, data, target):
+        if not isinstance(data, np.ndarray):
+            data = np.array(data, dtype='float32')
+        else:
+            data = data.astype('float32')
         self.data = data
         self.target = target
         self.meta = [{"name": "base_feature", 

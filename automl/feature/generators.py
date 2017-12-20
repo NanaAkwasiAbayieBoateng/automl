@@ -2,10 +2,43 @@ import logging
 from functools import partial
 import random
 import numpy as np
+import itertools as it
 from sklearn.preprocessing import PolynomialFeatures
 from automl.pipeline import PipelineData
 
+class PolynomialFeatureGenerator:
+    def __init__(self, max_degree):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self.max_degree = max_degree
 
+    def __call__(self, pipeline_data, pipeline_context):
+        data = pipeline_data.dataset.data
+        meta = pipeline_data.dataset.meta
+        orig_feature_num = pipeline_data.dataset.data.shape[1]
+
+        for degree in range(1, self.max_degree+1):
+
+            sets_of_indices = list(set(tuple(sorted(indices)) for indices in it.product(range(0, orig_feature_num), repeat=degree)))
+            
+            for indices in sets_of_indices:
+                new_feature = np.ones((data.shape[0], 1), dtype='float32')
+                history = ""
+
+                for index in indices:
+                    new_feature = np.reshape(data[:, index], (data.shape[0], 1))*new_feature
+                    history = meta[index]['history'] + '*' + history         
+                if np.isfinite(new_feature).all():    
+                    data = np.append(data, new_feature, axis=1)
+                    meta.append({
+                            "name" : "",
+                            "history" : history[:-1] #drop last symbol
+                        })
+                else:
+                    pass
+
+        pipeline_data.dataset.data = data
+        pipeline_data.dataset.meta = meta
+        return pipeline_data   
 
 
 class SklearnFeatureGenerator:
@@ -182,10 +215,6 @@ class FormulaFeatureGenerator:
             Transformed array.
         """
         orig_feature_num = pipeline_data.dataset.data.shape[1]
-        if not isinstance(pipeline_data.dataset, np.ndarray):
-            X = np.array(pipeline_data.dataset.data, dtype='f') #we need dtype=float32 dataset
-        else:
-            X = pipeline_data.dataset.data
 
         for _ in range(0, limit):
             new_feature, history = self._func_map[random.sample(self.used_func, 1)[0]](pipeline_data.dataset)
