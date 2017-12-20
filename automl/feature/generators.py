@@ -7,30 +7,34 @@ from sklearn.preprocessing import PolynomialFeatures
 from automl.pipeline import PipelineData
 
 class PolynomialFeatureGenerator:
-    def __init__(self, degree):
+    def __init__(self, max_degree):
         self._log = logging.getLogger(self.__class__.__name__)
-        self.degree = degree
+        self.max_degree = max_degree
 
     def __call__(self, pipeline_data, pipeline_context):
         data = pipeline_data.dataset.data
         meta = pipeline_data.dataset.meta
         orig_feature_num = pipeline_data.dataset.data.shape[1]
 
-        sets_of_indices = list(set(tuple(sorted(indices)) for indices in it.product(range(0, orig_feature_num), repeat=self.degree)))
+        for degree in range(1, self.max_degree+1):
 
-        new_feature = np.ones((data.shape[0], 1))
-        history = ""
-        
-        for indices in sets_of_indices:
-            for index in indices:
-                new_feature = np.reshape(data[:, index], (data.shape[0], 1))*new_feature
-                history = f"data[:, {index}]*" + history
-            if np.isfinite(new_feature).all():
-                data = np.append(data, new_feature, axis=1)
-                meta.append({
-                        "name" : "",
-                        "history" : history[:-1] #drop last symbol
-                    })
+            sets_of_indices = list(set(tuple(sorted(indices)) for indices in it.product(range(0, orig_feature_num), repeat=degree)))
+            
+            for indices in sets_of_indices:
+                new_feature = np.ones((data.shape[0], 1), dtype='float32')
+                history = ""
+
+                for index in indices:
+                    new_feature = np.reshape(data[:, index], (data.shape[0], 1))*new_feature
+                    history = meta[index]['history'] + '*' + history         
+                if np.isfinite(new_feature).all():    
+                    data = np.append(data, new_feature, axis=1)
+                    meta.append({
+                            "name" : "",
+                            "history" : history[:-1] #drop last symbol
+                        })
+                else:
+                    pass
 
         pipeline_data.dataset.data = data
         pipeline_data.dataset.meta = meta
@@ -211,8 +215,6 @@ class FormulaFeatureGenerator:
             Transformed array.
         """
         orig_feature_num = pipeline_data.dataset.data.shape[1]
-        if not isinstance(pipeline_data.dataset.data, np.ndarray):
-            pipeline_data.dataset.data = np.array(pipeline_data.dataset.data)
 
         for _ in range(0, limit):
             new_feature, history = self._func_map[random.sample(self.used_func, 1)[0]](pipeline_data.dataset)
