@@ -45,7 +45,7 @@ class FeatureSelector:
 
             # TODO: CV scorer in hyperopt does not fit models ???
             model.fit(pipeline_data.dataset.data, pipeline_data.dataset.target)
-
+ 
             if hasattr(model, "coef_"):
                 f_score = [abs(coef) for coef in model.coef_]
             elif hasattr(model, "feature_importances_",):
@@ -56,7 +56,7 @@ class FeatureSelector:
             if f_score is not None:
                 if pipeline_data.dataset.data.shape[1] > self.max_features:
                     threshold = sorted(f_score)[-self.max_features]
-                    mask = mask + np.array([score > threshold for score in f_score])
+                    mask = mask + np.array([score >= threshold for score in f_score])
                     self._log.info(f"Removing {sum(mask)} features for model {model.__class__.__name__}")
             else:
                 self._log.warn(f"Model {model.__class__.__name__} is not supported by FeatureSelector")
