@@ -84,6 +84,8 @@ class CV(ModelSpaceFunctor):
                n_jobs=self._n_jobs,
                scoring=self._scoring)
 
+        model.fit(pipeline_data.dataset.data, pipeline_data.dataset.target)
+
         result = ValidationResult(model, params, np.mean(cv_score))
         return result
 
