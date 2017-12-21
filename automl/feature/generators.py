@@ -235,15 +235,14 @@ class RecoveringFeatureGenerator:
     def __init__(self):
         self._log = logging.getLogger(self.__class__.__name__)
 
-    def __call__(self, pipeline_data, pipeline_context):
-        dataset = pipeline_data.dataset
-        data = dataset.data
-        for feature in dataset.meta:
-            if feature["name"] != "base_feature": 
-                explicit_locals = locals()
-                exec(f"new_feature = {feature['history']}", globals(), explicit_locals)
-                new_feature = explicit_locals["new_feature"]
-                np.append(data, new_feature)
-        return pipeline_data
+    def __call__(self, meta, data):
+        data = data.astype("float32")
+        final_data = np.ones((data.shape[0], 1), dtype='float32')
+        for feature in meta:
+            explicit_locals = locals()
+            exec(f"new_feature = {feature['history']}", globals(), explicit_locals)
+            new_feature = np.reshape(explicit_locals["new_feature"], (data.shape[0], 1))
+            final_data = np.append(final_data, new_feature, axis=1) 
+        return np.delete(final_data.astype('float32'), 0, 1)
 
 PolynomialGenerator = partial(SklearnFeatureGenerator, PolynomialFeatures)
