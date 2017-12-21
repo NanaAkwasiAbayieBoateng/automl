@@ -14,7 +14,7 @@ class TestDataset(unittest.TestCase):
         self.assertIsInstance(dataset, Dataset)
         self.assertEqual(dataset.target.name, 'd')
         self.assertTrue((dataset.target == [4]).all())
-        #self.assertTrue((dataset.data.as_matrix() == [[1, 2, 3]]).all())
+        self.assertTrue((dataset.data == [[1, 2, 3]]).all())
 
     def test_dataset_extractor_callable_filter(self):
         def col_filter(data):

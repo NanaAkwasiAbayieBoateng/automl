@@ -5,7 +5,7 @@ from automl.pipeline import LocalExecutor, Pipeline, PipelineStep
 from automl.data.dataset import Dataset
 from automl.model import ModelSpace, Validate, CV, ChooseBest
 from automl.feature.selector import FeatureSelector, VotingFeatureSelector, RecursiveFeatureSelector
-from automl.feature.generators import FormulaFeatureGenerator
+from automl.feature.generators import FormulaFeatureGenerator, RecoveringFeatureGenerator
 from automl.hyperparam.hyperopt import Hyperopt
 from automl.hyperparam.templates import random_forest_hp_space, knn_hp_space, svc_kernel_hp_space, grad_boosting_hp_space, xgboost_hp_space
 
@@ -73,10 +73,11 @@ class IntegrationTests(unittest.TestCase):
 
     def test_all_step(self):
         model_list = [
-            (Lasso, {}),
-            (Ridge, {}),
-            (KernelRidge, {}),
-            (RandomForestRegressor, {})
+            #(Lasso, {}),
+            #(Ridge, {}),
+            #(KernelRidge, {}),
+            (RandomForestRegressor, {}),
+            (XGBRegressor, {})
         ]
 
         data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
@@ -84,8 +85,8 @@ class IntegrationTests(unittest.TestCase):
             PipelineStep('model space', ModelSpace(model_list)) >>
             PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*'])) >>
             PipelineStep('cv', Validate(test_size=0.33, metrics=mean_squared_error)) >>
-            PipelineStep('choose', ChooseBest(3)) >>
-            PipelineStep('selection', FeatureSelector(30)))
+            PipelineStep('choose', ChooseBest(1, by_largest_score=False)) >>
+            PipelineStep('selection', FeatureSelector(20)))
 
         print('0'*30)
         for result in pipeline_data.return_val:
@@ -151,13 +152,18 @@ class IntegrationTests(unittest.TestCase):
             >> VotingFeatureSelector(feature_to_select=10, reverse_score=True)
         )
 
+        rec = RecoveringFeatureGenerator()
+        final_data = rec(pipeline_data.dataset.meta, x)
+        self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
+        self.assertTrue((final_data == pipeline_data.dataset.data).all())
+
         print('0'*30)
         for result in pipeline_data.return_val:
             print(result.model, result.score)
         print(pipeline_data.dataset.data.shape)
         print('0'*30)
 
-    def test_RFE(self):
+    def test_RFS(self):
         x, y = make_classification(
             n_samples=100,
             n_features=40,
@@ -184,3 +190,9 @@ class IntegrationTests(unittest.TestCase):
             PipelineStep('choose', ChooseBest(1)) >>
             PipelineStep('selection', RecursiveFeatureSelector(n_features_to_select=n_features_to_select))
         )
+
+        rec = RecoveringFeatureGenerator()
+        final_data = rec(pipeline_data.dataset.meta, x)
+        self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
+        self.assertTrue((final_data == pipeline_data.dataset.data).all())
+
