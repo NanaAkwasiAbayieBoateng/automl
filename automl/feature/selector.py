@@ -11,15 +11,16 @@ def softmax(x):
 
 class FeatureSelector:
     """
-    Class for feature selection step in pipeline 
+    Class for feature selection step in pipeline. This selector 
+    provides selection strategy based on one estimator. It means
+    that FeatureSelector must be used with ChooseBest(1)
+    
+    Parametrs
+    ---------
+    max_feature : int
+        Desired numbers of features
     """
     def __init__(self, max_features):
-        """
-        Parametrs
-        ---------
-        max_feature : int
-            Approximate desired numbers of features
-        """
         self._log = logging.getLogger(self.__class__.__name__)
         self.max_features = max_features
 
@@ -36,8 +37,7 @@ class FeatureSelector:
         Returns
         -------
         PipelineData
-            PipelineData.dataset contains changed dataset, PipelineData.return_val
-            contains unchanged result of validation step 
+            PipelineData.dataset contains changed dataset
         """
         if len(pipeline_data.return_val)>1:
             raise ValueError("Recurcive Feature Selector must be used with ChooseBest(1)")
@@ -75,6 +75,29 @@ class FeatureSelector:
 
 
 class RecursiveFeatureSelector:
+    """
+    Class for feature selection step in pipeline. This selector 
+    provides recurcive strategy based on one estimator. It means
+    that FeatureSelector must be used with ChooseBest(1)
+
+    Parameters
+    ----------
+    n_features_to_select : int or None (default=None)
+        The number of features to select. If None, half of the features are selected.
+
+    step : int or float, optional (default=1)
+        If greater than or equal to 1, then step corresponds to
+        the (integer) number of features to remove at each iteration.
+        If within (0.0, 1.0), then step corresponds to the percentage
+        (rounded down) of features to remove at each iteration.
+
+    verbose : int, default=0
+        Controls verbosity of output.
+
+    See also
+    --------
+    http://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.RFE.html
+    """
     def __init__(self, n_features_to_select=None, step=1, verbose=0):
         self._log = logging.getLogger(self.__class__.__name__)
         self.n_features_to_select = n_features_to_select
@@ -82,6 +105,20 @@ class RecursiveFeatureSelector:
         self.verbose = verbose
 
     def __call__(self, pipeline_data, context):
+        """
+        Parametrs
+        ---------
+        pipeline_data : PipelineData
+            Data passed between PipelineStep in pipeline
+
+        context : PiplineContext
+            Global context of pipeline
+
+        Returns
+        -------
+        PipelineData
+            PipelineData.dataset contains changed dataset
+        """
         if len(pipeline_data.return_val)>1:
             raise ValueError("Recurcive Feature Selector must be used with ChooseBest(1)")
 
@@ -104,12 +141,43 @@ class RecursiveFeatureSelector:
 
 
 class VotingFeatureSelector:
+    """
+    Class for feature selection step in pipeline. This selector 
+    provides selection strategy based on several estimator. It means
+    that FeatureSelector can be used with ChooseBest(n), n>1. All 
+    model that have feature_importances_ or coeff_ attribute have 
+    contribution to selection 
+
+    Parametrs
+    ---------
+    feature_to_select : int
+        Desired numbers of features
+
+    reverse_score : boolean
+        If True, it means that bigger value of score is better,
+        if False, it means that smaller value of score is worse
+    """
+
     def __init__(self, feature_to_select, reverse_score=False):
         self._log = logging.getLogger(self.__class__.__name__)
         self.feature_to_select = feature_to_select
         self.reverse_score = reverse_score
     
     def __call__(self, pipeline_data, context):
+        """
+        Parametrs
+        ---------
+        pipeline_data : PipelineData
+            Data passed between PipelineStep in pipeline
+
+        context : PiplineContext
+            Global context of pipeline
+
+        Returns
+        -------
+        PipelineData
+            PipelineData.dataset contains changed dataset
+        """
         vote = []
         model_scores = []
         
