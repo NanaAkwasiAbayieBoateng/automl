@@ -2,15 +2,27 @@ import numpy as np
 
 class Dataset:
     def __init__(self, data, target):
+        if hasattr(data, 'columns'):
+            self.meta = []
+            for i, col in enumerate(data.columns):
+                self.meta.append({"name": col,
+                                  "history": f"data[:,{i}]"})
+
+        else:
+            self.meta = [{"name": "base_feature",
+                          "history": f"data[:,{i}]"} for i in range(0, data.shape[1])]
+
         if not isinstance(data, np.ndarray):
             data = np.array(data, dtype='float32')
         else:
             data = data.astype('float32')
         self.data = data
         self.target = target
-        self.meta = [{"name": "base_feature", 
-                      "history" : f"data[:,{i}]"} for i in range(0, data.shape[1])]
 
+    @property
+    def columns(self):
+        return [m['name'] for m in self.meta]
+            
 
 
 class DatasetExtractor:
@@ -27,6 +39,7 @@ class DatasetExtractor:
             dataset and return a column list
         """
         self._target = target
+
         self._data_col_filter = data_col_filter
 
     def __call__(self, x, context):

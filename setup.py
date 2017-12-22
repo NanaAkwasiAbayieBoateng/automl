@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='auto-ml',
-      version='0.1',
+      version='0.1a',
       description='Automated Machine Learning Framework',
       author='Kirill Dubovikov, Igor Fokin',
       author_email='dubovikov.kirill@gmail.com',

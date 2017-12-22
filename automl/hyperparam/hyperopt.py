@@ -36,8 +36,14 @@ class Hyperopt(ModelSpaceFunctor):
         self._reverse_score = reverse_score
 
     def __call__(self, pipeline_data, context):
-        trials = Trials()
         model, hparam_space = context
+        self._log.info(hparam_space)
+        if not hparam_space:
+            self._log.warn((f"Skipping hyperopt step for model {model}. No "
+                             "parameter templats found"))
+            return HyperparameterSearchResult(model, 0, None)
+
+        trials = Trials()
         self._log.info(f"Running hyperparameter optimization for {model}")
 
         score = partial(self._score_step_fn, pipeline_data, context)
