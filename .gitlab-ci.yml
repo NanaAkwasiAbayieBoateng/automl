@@ -22,7 +22,7 @@ deploy:
     only:
         - master
     script:
-        - pip install awscli
-        - aws s3 cp . s3://onepanel-automl/automl --recursive
+        - python setup.py sdist
+        - curl -F package=@./dist/*.tar.gz https://$GEMFURY_SECRET@repo.fury.io/onepanel/
     dependencies:
         - test
