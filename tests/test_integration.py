@@ -5,7 +5,7 @@ from automl.pipeline import LocalExecutor, Pipeline, PipelineStep
 from automl.data.dataset import Dataset
 from automl.model import ModelSpace, Validate, CV, ChooseBest
 from automl.feature.selector import FeatureSelector, VotingFeatureSelector, RecursiveFeatureSelector
-from automl.feature.generators import FormulaFeatureGenerator, RecoveringFeatureGenerator
+from automl.feature.generators import FormulaFeatureGenerator, Preprocessing
 from automl.hyperparam.hyperopt import Hyperopt
 from automl.hyperparam.templates import random_forest_hp_space, knn_hp_space, svc_kernel_hp_space, grad_boosting_hp_space, xgboost_hp_space
 
@@ -152,8 +152,8 @@ class IntegrationTests(unittest.TestCase):
             >> VotingFeatureSelector(feature_to_select=10, reverse_score=True)
         )
 
-        rec = RecoveringFeatureGenerator()
-        final_data = rec(pipeline_data.dataset.meta, x)
+        preprocessing = Preprocessing()
+        final_data = preprocessing.reproduce(pipeline_data, data)
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
 
@@ -191,8 +191,7 @@ class IntegrationTests(unittest.TestCase):
             PipelineStep('selection', RecursiveFeatureSelector(n_features_to_select=n_features_to_select))
         )
 
-        rec = RecoveringFeatureGenerator()
-        final_data = rec(pipeline_data.dataset.meta, x)
+        preprocessing = Preprocessing()
+        final_data = preprocessing.reproduce(pipeline_data, data)
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
-
