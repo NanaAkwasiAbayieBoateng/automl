@@ -1,7 +1,22 @@
+"""Dataset abstraction"""
 import numpy as np
 
+
 class Dataset:
+    """AutoML Dataset. This class is the main input object that needs to be
+    passed into the Pipeline
+    """
+
     def __init__(self, data, target):
+        """Create Dataset.
+
+        Parameters
+        ----------
+        data: pandas.DataFrame or numpy.array
+            training data
+        target: pandas.DataFrame or numpy.array
+            target variable
+        """
         if hasattr(data, 'columns'):
             self.meta = []
             for i, col in enumerate(data.columns):
@@ -21,15 +36,19 @@ class Dataset:
 
     @property
     def columns(self):
+        """Get column names
+
+        Returns
+        -------
+        columns: list[str]
+        """
         return [m['name'] for m in self.meta]
-            
 
 
 class DatasetExtractor:
-
     def __init__(self, target, data_col_filter=None):
         """Extract Dataset from pandas DataFrame
-        
+
         Parameters
         ----------
         target: str or int

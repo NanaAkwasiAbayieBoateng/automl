@@ -10,14 +10,13 @@ from automl.pipeline import ModelSpaceFunctor, PipelineData
 
 
 class ModelSpace:
-    """
-    Class contains predefined models with given hyperparameters
+    """Class contains predefined models with given hyperparameters
 
     Parameters
     ----------
     model_list : list of tuples
         each element must be a tuple where the first element is an estimator
-        and the second one is estimator parameter kwargs dict 
+        and the second one is estimator parameter kwargs dict
     """
 
     def __init__(self, model_list):
@@ -25,8 +24,8 @@ class ModelSpace:
         self._model_list = model_list
 
     def __call__(self, pipeline_data, context):
-        """
-        Sets model space in PipelineContext and passes unchanged dataset on the next step
+        """ Sets model space in PipelineContext and passes unchanged dataset
+        on the next step
 
         Parametrs
         ---------
@@ -44,7 +43,10 @@ class ModelSpace:
         context.model_space = self._model_list
         return pipeline_data
 
+
 class ValidationResult:
+    """A wrapper class for model validation results"""
+
     def __init__(self, model, params, score):
         self.model_class = model.__class__
         self.model = model
@@ -65,7 +67,7 @@ class CV(ModelSpaceFunctor):
             self._n_jobs = n_jobs
 
     def __call__(self, pipeline_data, context, hparams=None):
-        model, model_params = context 
+        model, model_params = context
 
         # still a bit ugly...
         # 1. model_params contain hyperopt template if we are using Hyperopt
@@ -74,15 +76,15 @@ class CV(ModelSpaceFunctor):
             params = hparams
         else:
             params = model_params
-        model = model(**params) 
+        model = model(**params)
 
         cv_score = cross_val_score(
-               model,
-               pipeline_data.dataset.data,
-               pipeline_data.dataset.target,
-               cv=self._n_folds,
-               n_jobs=self._n_jobs,
-               scoring=self._scoring)
+            model,
+            pipeline_data.dataset.data,
+            pipeline_data.dataset.target,
+            cv=self._n_folds,
+            n_jobs=self._n_jobs,
+            scoring=self._scoring)
 
         model.fit(pipeline_data.dataset.data, pipeline_data.dataset.target)
 
@@ -95,7 +97,7 @@ class Validate(ModelSpaceFunctor):
     Class for validation step in pipeline with using user metrics
     """
 
-    def __init__(self, test_size, metrics, stratify=False): #change to stratify=True
+    def __init__(self, test_size, metrics, stratify=False):
         """
         Parametrs
         ---------
@@ -131,7 +133,7 @@ class Validate(ModelSpaceFunctor):
         validation_results : list of tuples
             Tuples like (model, score)
         """
-        model, model_params = context 
+        model, model_params = context
 
         # still a bit ugly...
         # 1. model_params contain hyperopt template if we are using Hyperopt
@@ -140,8 +142,8 @@ class Validate(ModelSpaceFunctor):
             params = hparams
         else:
             params = model_params
-        model = model(**params) 
-        
+        model = model(**params)
+
         stratify = None
         if self._stratify:
             stratify = pipeline_data.dataset.target
@@ -193,7 +195,7 @@ class ChooseBest:
         dataset : Dataset
             Unchanged dataset is passed to next step in pipeline
 
-        sorted_scores : list of tuples 
+        sorted_scores : list of tuples
             Only the top self._k tuples like (model, score) with the best score
         """
         model_scores = [inp for inp in pipeline_data.return_val]
