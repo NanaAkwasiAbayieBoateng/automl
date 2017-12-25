@@ -1,3 +1,4 @@
+"""Hyperopt templates for different models"""
 # forked from hyperopt/hyperopt-sklearn
 
 from functools import partial

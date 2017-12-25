@@ -8,7 +8,7 @@ class PipelineContext:
         self.epoch = 0
         self.prev_step = None
         self.feature_scores = None
-        self.model_space = [] 
+        self.model_space = []
 
 
 class PipelineData:
@@ -16,10 +16,10 @@ class PipelineData:
         self.dataset = dataset
         self.return_val = return_val
 
-        
+
 class PipelineStep:
     """Base class for all pipeline steps
-    
+
     Example:
         >>> PipelineStep('step name', lambda x: x * 2)
     """
@@ -43,7 +43,8 @@ class PipelineStep:
                                                    **self._kwargs)
                 return self._cached_response
             else:
-                self._log.info(f"Initializer step {self.name} was already run, skipping")
+                self._log.info((f"Initializer step {self.name} was already"
+                                " run, skipping"))
                 return self._cached_response
         else:
             return self._func(pipe_input, context, *self._args, **self._kwargs)
@@ -59,7 +60,7 @@ class ModelSpaceFunctor:
 
 class Pipeline:
     """AutoML Pipeline
-    
+
     Example:
         >>> Pipeline() >> PipelineStep('hello step', lambda: print('Hi!'))
     """
@@ -70,21 +71,21 @@ class Pipeline:
             self.steps = steps
         else:
             self.steps = []
-    
+
     def __rshift__(self, other):
         if not isinstance(other, PipelineStep):
             if callable(other):
                 other = PipelineStep(other.__class__.__name__, other)
             else:
                 raise ValueError(("Non-callable step passted to the pipeline."
-                                 f"Step {other} must be callable"))
+                                  f"Step {other} must be callable"))
 
         self.steps.append(other)
         return self
 
 class LocalExecutor:
     """Run AutoML Pipeline locally
-    
+
     Example:
     >>> LocalExecutor(epochs=10) << pipeline
     """
@@ -108,7 +109,7 @@ class LocalExecutor:
 
     def run(self, pipeline, input_data=None, epochs=1):
         """Run pipeline.
-        
+
         Parameters
         ----------
         pipeline: Pipeline
@@ -127,26 +128,15 @@ class LocalExecutor:
         for epoch_n in range(0, epochs):
             self._context.epoch = epoch_n
             self._log.info(f"Starting AutoML Epoch #{epoch_n + 1}")
-            
+
             pipeline_data = input_data
             for step in tqdm(pipeline.steps):
                 self._log.info(f"Running step '{step.name}'")
                 if step.is_model_space_functor():
-                    # result = []
-                    # for model_and_params in self._context.model_space:
-                    #     step_return = step(pipeline_data, model_and_params)
-                    #     result.append(step_return)
-                    #     print('='*20)
-                    #     print(f"{step.name}, {model_and_params}")
-                    #     print(f"RESULT - {step_return.model}")
-                        
-                    #     print('='*20)
-                    
-                    # pipeline_data.return_val = result
                     pipeline_data.return_val = [step(pipeline_data, model_and_params)
-                                  for model_and_params in self._context.model_space]
-                    
+                                                for model_and_params
+                                                in self._context.model_space]
                 else:
                     pipeline_data = step(pipeline_data, self._context)
-        
+
         return self._context, pipeline_data

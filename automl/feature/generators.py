@@ -1,10 +1,12 @@
+"""Pipeline steps for feature generation"""
+
 import logging
+import itertools as it
 from functools import partial
 import random
 import numpy as np
-import itertools as it
 from sklearn.preprocessing import PolynomialFeatures
-from automl.pipeline import PipelineData
+
 
 class PolynomialFeatureGenerator:
     """Generate polynomial and interaction features for dataset in PipelineData
@@ -50,33 +52,35 @@ class PolynomialFeatureGenerator:
         orig_feature_num = pipeline_data.dataset.data.shape[1]
 
         for degree in range(1, self.max_degree+1):
-
+            # TODO this is unreadable, unwrap
             sets_of_indices = list(set(tuple(sorted(indices)) for indices in it.product(range(0, orig_feature_num), repeat=degree)))
-            
+
             for indices in sets_of_indices:
                 new_feature = np.ones((data.shape[0], 1), dtype='float32')
                 history = ""
 
                 for index in indices:
-                    new_feature = np.reshape(data[:, index], (data.shape[0], 1))*new_feature
-                    history = meta[index]['history'] + '*' + history         
-                if np.isfinite(new_feature).all():    
+                    new_feature = np.reshape(
+                        data[:, index],
+                        (data.shape[0], 1)
+                    ) * new_feature
+                    history = meta[index]['history'] + '*' + history
+                if np.isfinite(new_feature).all():
                     data = np.append(data, new_feature, axis=1)
                     meta.append({
-                            "name" : "",
-                            "history" : history[:-1] #drop last symbol
-                        })
+                        "name": "",
+                        "history": history[:-1]  # drop last symbol
+                    })
                 else:
                     pass
 
         pipeline_data.dataset.data = data
         pipeline_data.dataset.meta = meta
-        return pipeline_data   
+        return pipeline_data
 
 
 class SklearnFeatureGenerator:
-    """
-    Wrapper for Scikit-Learn Transformers (only for
+    """ Wrapper for Scikit-Learn Transformers (only for
     sklearn.preprocessing.PolynomialFeatures at this release)
 
     Parameters
@@ -90,7 +94,6 @@ class SklearnFeatureGenerator:
         keyword arguments are passed to sklearn PolynomialFeatures
     """
     def __init__(self, transformer_class, *args, **kwargs):
-        
         self._log = logging.getLogger(self.__class__.__name__)
         self._transformer = transformer_class(*args, **kwargs)
 
@@ -115,8 +118,7 @@ class SklearnFeatureGenerator:
 
 
 class FormulaFeatureGenerator:
-    """
-    Generate features for dataset in PipelineData by formula
+    """ Generate features for dataset in PipelineData by formula
 
     Generate a new feature matrix from current matrix in pipeline
     consisting of old features and new features generated from operations
@@ -134,8 +136,8 @@ class FormulaFeatureGenerator:
 
     used_func : set of of symbols of functions
     """
+
     def __init__(self, func_list=['+', '-', '*', '/']):
-        
         self._log = logging.getLogger(self.__class__.__name__)
         self.used_func = set(func_list)
         self._func_map = {
@@ -146,8 +148,7 @@ class FormulaFeatureGenerator:
         }
 
     def _sum(self, dataset):
-        """
-        Generate one new feature by sum of two random features
+        """ Generate one new feature by sum of two random features
 
         Parametrs
         ---------
@@ -164,13 +165,13 @@ class FormulaFeatureGenerator:
         """
         X = dataset.data
         first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
+        x, y = X[:, first_index].reshape(
+            X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
         history = f"({dataset.meta[first_index]['history']}+{dataset.meta[second_index]['history']})"
         return x + y, history
-    
+
     def _substract(self, dataset):
-        """
-        Generate one new feature by substraction of two random features
+        """Generate one new feature by substraction of two random features
 
         Parametrs
         ---------
@@ -187,19 +188,19 @@ class FormulaFeatureGenerator:
         """
         X = dataset.data
         first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
+        x, y = X[:, first_index].reshape(
+            X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
         history = f"({dataset.meta[first_index]['history']}-{dataset.meta[second_index]['history']})"
         return x - y, history
 
     def _divide(self, dataset):
-        """
-        Generate one new feature by division of two random features
+        """ Generate one new feature by division of two random features
 
         Parametrs
         ---------
         dataset : Dataset
             Dataset.data contains data to transform
-
+            
         Returns
         -------
         np.ndarray shape [n_sample, 1]
@@ -215,8 +216,7 @@ class FormulaFeatureGenerator:
         return x / y, history
 
     def _multiply(self, dataset):
-        """
-        Generate one new feature by multiplication of two random features
+        """ Generate one new feature by multiplication of two random features
 
         Parametrs
         ---------
@@ -238,8 +238,7 @@ class FormulaFeatureGenerator:
         return x * y, history
 
     def _choose_two_index(self, X):
-        """
-        Choose two index input data
+        """ Choose two index input data
 
         Parametrs
         ---------
@@ -293,16 +292,15 @@ class FormulaFeatureGenerator:
         return pipeline_data 
 
 class RecoveringFeatureGenerator:
+    """ Reproduce all feature transformations that were creating during the
+    execution of AutoML pipeline
     """
-    Recover dataset generated in pipeline by initial data
-    and metadata formed in pipeline
-    """
+
     def __init__(self):
         self._log = logging.getLogger(self.__class__.__name__)
 
     def __call__(self, meta, data):
-        """
-        Parameters
+        """ Parameters
         ----------
         meta : list of dict
             Metadata generated by executor
@@ -319,8 +317,15 @@ class RecoveringFeatureGenerator:
         final_data = np.ones((data.shape[0], 1), dtype='float32')
         for feature in meta:
             explicit_locals = locals()
-            exec(f"new_feature = {feature['history']}", globals(), explicit_locals)
-            new_feature = np.reshape(explicit_locals["new_feature"], (data.shape[0], 1))
+            exec(
+                f"new_feature = {feature['history']}",
+                globals(),
+                explicit_locals
+            )
+            new_feature = np.reshape(
+                explicit_locals["new_feature"],
+                (data.shape[0], 1)
+            )
             final_data = np.append(final_data, new_feature, axis=1) 
         return np.delete(final_data.astype('float32'), 0, 1)
 
