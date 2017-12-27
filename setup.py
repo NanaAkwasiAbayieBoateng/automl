@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-setup(name='auto-ml',
+setup(name='automl',
       version='0.1a',
       description='Automated Machine Learning Framework',
       author='Kirill Dubovikov, Igor Fokin',
