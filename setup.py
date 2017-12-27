@@ -12,8 +12,7 @@ setup(name='automl',
           'scikit-learn>=0.19.1',
           'tqdm',
           'hyperopt>=0.1',
-          'networkx==1.11',
-          'xgboost>=0.6a2'
+          'networkx==1.11'
           ],
       license='License :: Other/Proprietary License',
       classifiers=['Topic :: Scientific/Engineering :: Artificial Intelligence',
