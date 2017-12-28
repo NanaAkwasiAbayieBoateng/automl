@@ -129,6 +129,9 @@ class FormulaFeatureGenerator:
     func_list : list of symbols of functions
         In current version func_list may contain only '+', '-', '*', '/'.
 
+    limit: int
+        Total number of expression members
+
     Attributes
     ----------
     _func_map : dict of generating functions
@@ -137,7 +140,7 @@ class FormulaFeatureGenerator:
     used_func : set of of symbols of functions
     """
 
-    def __init__(self, func_list=['+', '-', '*', '/']):
+    def __init__(self, func_list=['+', '-', '*', '/'], limit=1):
         self._log = logging.getLogger(self.__class__.__name__)
         self.used_func = set(func_list)
         self._func_map = {
@@ -146,6 +149,7 @@ class FormulaFeatureGenerator:
             '/': self._divide,
             '*': self._multiply,
         }
+        self._limit = limit
 
     def _sum(self, dataset):
         """ Generate one new feature by sum of two random features
@@ -260,7 +264,7 @@ class FormulaFeatureGenerator:
         return random.randint(0, X.shape[1]-1),\
                random.randint(0, X.shape[1]-1)
 
-    def __call__(self, pipeline_data, pipeline_context, limit=10):
+    def __call__(self, pipeline_data, pipeline_context):
         """
         Parameters
         ----------
@@ -280,7 +284,7 @@ class FormulaFeatureGenerator:
         """
         orig_feature_num = pipeline_data.dataset.data.shape[1]
 
-        for _ in range(0, limit):
+        for _ in range(0, self._limit):
             new_feature, history, name = self._func_map[random.sample(self.used_func, 1)[0]](pipeline_data.dataset)
             if np.isfinite(new_feature).all():
                 pipeline_data.dataset.data = np.append(pipeline_data.dataset.data, new_feature, axis=1)
