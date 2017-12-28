@@ -153,7 +153,7 @@ class IntegrationTests(unittest.TestCase):
         )
 
         preprocessing = Preprocessing()
-        final_data = preprocessing.reproduce(pipeline_data, data)
+        final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(x, y))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
 
@@ -192,6 +192,6 @@ class IntegrationTests(unittest.TestCase):
         )
 
         preprocessing = Preprocessing()
-        final_data = preprocessing.reproduce(pipeline_data, data)
+        final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(x, y))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())

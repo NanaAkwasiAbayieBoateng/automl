@@ -68,8 +68,8 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
             >> ChooseBest(1) 
             >> FeatureSelector(30))
 
-        rec = Preprocessing()
-        final_data = rec(pipeline_data.dataset.meta, datasets.load_boston().data)
+        preprocessing = Preprocessing()
+        final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(datasets.load_boston().data, datasets.load_boston().target))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
 
@@ -91,7 +91,7 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
             >> FeatureSelector(10)
             )
 
-        rec = Preprocessing()
-        final_data = rec(pipeline_data.dataset.meta, X.astype('float32'))
+        preprocessing = Preprocessing()
+        final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(X, y))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         #self.assertTrue((np.around(final_data, decimals=5) == np.around(pipeline_data.dataset.data, decimals=5)).all())
