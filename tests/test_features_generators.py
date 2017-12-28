@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import random
 
 from automl.feature.generators import SklearnFeatureGenerator, FormulaFeatureGenerator, \
-RecoveringFeatureGenerator, PolynomialGenerator, PolynomialFeatureGenerator
+Preprocessing, PolynomialGenerator, PolynomialFeatureGenerator
 from automl.pipeline import PipelineContext, PipelineData, Pipeline, LocalExecutor
 from automl.data.dataset import Dataset
 from automl.model import Validate, ModelSpace, ChooseBest
@@ -68,7 +68,7 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
             >> ChooseBest(1) 
             >> FeatureSelector(30))
 
-        rec = RecoveringFeatureGenerator()
+        rec = Preprocessing()
         final_data = rec(pipeline_data.dataset.meta, datasets.load_boston().data)
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
@@ -91,7 +91,7 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
             >> FeatureSelector(10)
             )
 
-        rec = RecoveringFeatureGenerator()
+        rec = Preprocessing()
         final_data = rec(pipeline_data.dataset.meta, X.astype('float32'))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         #self.assertTrue((np.around(final_data, decimals=5) == np.around(pipeline_data.dataset.data, decimals=5)).all())
