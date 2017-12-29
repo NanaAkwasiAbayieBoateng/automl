@@ -1,6 +1,7 @@
 """Dataset abstraction"""
 import numpy as np
 
+from automl.expression import Atom
 
 class Dataset:
     """AutoML Dataset. This class is the main input object that needs to be
@@ -21,11 +22,11 @@ class Dataset:
             self.meta = []
             for i, col in enumerate(data.columns):
                 self.meta.append({"name": col,
-                                  "history": f"data[:,{i}]"})
+                                  "history": Atom(i)})
 
         else:
             self.meta = [{"name": "base_feature",
-                          "history": f"data[:,{i}]"} for i in range(0, data.shape[1])]
+                          "history": Atom(i)} for i in range(0, data.shape[1])]
 
         if not isinstance(data, np.ndarray):
             data = np.array(data, dtype='float32')
