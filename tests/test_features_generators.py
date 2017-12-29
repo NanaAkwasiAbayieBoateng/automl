@@ -46,10 +46,10 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         features = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         df = pd.DataFrame(features)
         X = PipelineData(Dataset(df, None))
-        gen = FormulaFeatureGenerator(['+', '*', '/', '-'])
         limit = random.randint(0, 100)
+        gen = FormulaFeatureGenerator(['+', '*', '/', '-'], limit)
         context = PipelineContext()
-        result_size = gen(X, context, limit).dataset.data.shape[1]
+        result_size = gen(X, context).dataset.data.shape[1]
         self.assertLessEqual(result_size,
                              np.array(features).shape[1] + limit)
 
