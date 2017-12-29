@@ -94,4 +94,4 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         preprocessing = Preprocessing()
         final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(X, y))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
-        #self.assertTrue((np.around(final_data, decimals=5) == np.around(pipeline_data.dataset.data, decimals=5)).all())
+        self.assertTrue((final_data == pipeline_data.dataset.data).all())

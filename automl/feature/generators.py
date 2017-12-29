@@ -7,6 +7,8 @@ import random
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 
+from automl.expression import Atom
+    
 
 class PolynomialFeatureGenerator:
     """Generate polynomial and interaction features for dataset in PipelineData
@@ -57,19 +59,19 @@ class PolynomialFeatureGenerator:
 
             for indices in sets_of_indices:
                 new_feature = np.ones((data.shape[0], 1), dtype='float32')
-                history = ""
+                history = Atom(0) / Atom(0) #init one as expression
 
                 for index in indices:
                     new_feature = np.reshape(
                         data[:, index],
                         (data.shape[0], 1)
                     ) * new_feature
-                    history = meta[index]['history'] + '*' + history
+                    history = meta[index]['history'] * history
                 if np.isfinite(new_feature).all():
                     data = np.append(data, new_feature, axis=1)
                     meta.append({
                         "name": "",
-                        "history": history[:-1]  # drop last symbol
+                        "history": history 
                     })
                 else:
                     pass
@@ -167,7 +169,7 @@ class FormulaFeatureGenerator:
         first_index, second_index = self._choose_two_index(X)
         x, y = X[:, first_index].reshape(
             X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}+{dataset.meta[second_index]['history']})"
+        history = dataset.meta[first_index]['history'] + dataset.meta[second_index]['history']
         name = f"{dataset.meta[first_index]['name']}_+_{dataset.meta[second_index]['name']}"
         return x + y, history, name
 
@@ -191,7 +193,7 @@ class FormulaFeatureGenerator:
         first_index, second_index = self._choose_two_index(X)
         x, y = X[:, first_index].reshape(
             X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}-{dataset.meta[second_index]['history']})"
+        history = dataset.meta[first_index]['history'] - dataset.meta[second_index]['history']
         name = f"{dataset.meta[first_index]['name']}_-_{dataset.meta[second_index]['name']}"
         return x - y, history, name
 
@@ -214,7 +216,7 @@ class FormulaFeatureGenerator:
         X = dataset.data
         first_index, second_index = self._choose_two_index(X)
         x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}/{dataset.meta[second_index]['history']})"
+        history = dataset.meta[first_index]['history'] / dataset.meta[second_index]['history']
         name = f"{dataset.meta[first_index]['name']}_/_{dataset.meta[second_index]['name']}"
         return x / y, history, name
 
@@ -237,7 +239,7 @@ class FormulaFeatureGenerator:
         X = dataset.data
         first_index, second_index = self._choose_two_index(X)
         x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}*{dataset.meta[second_index]['history']})"
+        history = dataset.meta[first_index]['history'] * dataset.meta[second_index]['history']
         name = f"{dataset.meta[first_index]['name']}_*_{dataset.meta[second_index]['name']}"
         return x * y, history, name
 
@@ -320,14 +322,9 @@ class Preprocessing:
         data = original_dataset.data.astype("float32")
         final_data = np.ones((data.shape[0], 1), dtype='float32')
         for feature in resulting_dataset.meta:
-            explicit_locals = locals()
-            exec(
-                f"new_feature = {feature['history']}",
-                globals(),
-                explicit_locals
-            )
+            new_feature = feature['history'].eval(data)
             new_feature = np.reshape(
-                explicit_locals["new_feature"],
+                new_feature,
                 (data.shape[0], 1)
             )
             final_data = np.append(final_data, new_feature, axis=1) 
