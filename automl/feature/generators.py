@@ -5,6 +5,7 @@ import itertools as it
 from functools import partial
 import random
 import numpy as np
+import operator
 from sklearn.preprocessing import PolynomialFeatures
 
 from automl.expression import Atom
@@ -153,6 +154,15 @@ class FormulaFeatureGenerator:
         }
         self._limit = limit
 
+    def _execution(self, dataset, operator):
+        X = dataset.data
+        first_index, second_index = self._choose_two_index(X)
+        x, y = X[:, first_index].reshape(
+            X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
+        history = operator(dataset.meta[first_index]['history'], dataset.meta[second_index]['history'])
+        name = f"{dataset.meta[first_index]['name']}_{operator.__name__}_{dataset.meta[second_index]['name']}"
+        return operator(x, y), history, name
+
     def _sum(self, dataset):
         """ Generate one new feature by sum of two random features
 
@@ -169,13 +179,8 @@ class FormulaFeatureGenerator:
         history : str
             the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(
-            X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = dataset.meta[first_index]['history'] + dataset.meta[second_index]['history']
-        name = f"{dataset.meta[first_index]['name']}_+_{dataset.meta[second_index]['name']}"
-        return x + y, history, name
+        
+        return self._execution(dataset, operator.__add__)
 
     def _substract(self, dataset):
         """Generate one new feature by substraction of two random features
@@ -193,13 +198,7 @@ class FormulaFeatureGenerator:
         history : str
             the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(
-            X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = dataset.meta[first_index]['history'] - dataset.meta[second_index]['history']
-        name = f"{dataset.meta[first_index]['name']}_-_{dataset.meta[second_index]['name']}"
-        return x - y, history, name
+        return self._execution(dataset, operator.__sub__)
 
     def _divide(self, dataset):
         """ Generate one new feature by division of two random features
@@ -217,12 +216,7 @@ class FormulaFeatureGenerator:
         history : str
             the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = dataset.meta[first_index]['history'] / dataset.meta[second_index]['history']
-        name = f"{dataset.meta[first_index]['name']}_/_{dataset.meta[second_index]['name']}"
-        return x / y, history, name
+        return self._execution(dataset, operator.__truediv__)
 
     def _multiply(self, dataset):
         """ Generate one new feature by multiplication of two random features
@@ -240,12 +234,7 @@ class FormulaFeatureGenerator:
         history : str
             the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = dataset.meta[first_index]['history'] * dataset.meta[second_index]['history']
-        name = f"{dataset.meta[first_index]['name']}_*_{dataset.meta[second_index]['name']}"
-        return x * y, history, name
+        return self._execution(dataset, operator.__mul__)
 
     def _choose_two_index(self, X):
         """ Choose two index input data
