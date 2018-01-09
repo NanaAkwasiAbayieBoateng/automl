@@ -160,7 +160,7 @@ class FormulaFeatureGenerator:
         x, y = X[:, first_index].reshape(
             X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
         history = operator(dataset.meta[first_index]['history'], dataset.meta[second_index]['history'])
-        name = f"{dataset.meta[first_index]['name']}_{operator.__name__}_{dataset.meta[second_index]['name']}"
+        name = f"({dataset.meta[first_index]['name']}_{operator.__name__}_{dataset.meta[second_index]['name']})"
         return operator(x, y), history, name
 
     def _sum(self, dataset):
