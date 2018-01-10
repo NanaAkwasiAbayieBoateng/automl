@@ -249,3 +249,28 @@ class VotingFeatureSelector:
             pipeline_data.dataset.meta = meta
 
         return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
+
+
+class CorrelatedFeatureSelector:
+    def __init__(self, max_correlation):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self.max_correlation = max_correlation
+
+    def __call__(self, pipeline_data, context):
+        candidates = []
+        for correlating_features in np.array(np.nonzero(np.absolute(np.corrcoef(pipeline_data.dataset.data.T)) > self.max_correlation)).T:
+            if correlating_features[0]!=correlating_features[1]:
+                candidates.append(tuple(sorted(correlating_features)))  #collect all pairs of feature indices which feature correlation bigger than max correlation parameter without pairs received by correlation with itself 
+        candidates = list(set(candidates)) #delete pairs received by permutation of indices
+        mask = [i not in set([couple[0] for couple in candidates]) for i in range(0, pipeline_data.dataset.data.shape[1])]#list of booleans. True if feature is not deleted by generator
+        
+        pipeline_data.dataset.data = pipeline_data.dataset.data.compress(mask, axis=1)
+        
+        meta = []
+        informative_features = zip(pipeline_data.dataset.meta, mask) 
+        for feature, informative in informative_features:
+            if informative:
+                meta.append(feature)
+        pipeline_data.dataset.meta = meta
+        
+        return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
