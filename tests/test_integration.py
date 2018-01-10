@@ -38,10 +38,11 @@ class IntegrationTests(unittest.TestCase):
         ]
 
         data = Dataset(datasets.load_iris().data, datasets.load_iris().target)
-        LocalExecutor(data) << (Pipeline() >>
-            PipelineStep('model space', ModelSpace(model_list)) >>
-            PipelineStep('validation', Validate(test_size=0.33, metrics=accuracy_score)) >>
-            PipelineStep('choose', ChooseBest(3)))
+        LocalExecutor(data) << (Pipeline()
+            >> ModelSpace(model_list)
+            >> Validate(test_size=0.33, metrics=accuracy_score)
+            >> ChooseBest(3)
+        )
 
     def test_step_cv(self):
         model_list = [
@@ -53,10 +54,11 @@ class IntegrationTests(unittest.TestCase):
         ]
 
         data = Dataset(datasets.load_iris().data, datasets.load_iris().target)
-        LocalExecutor(data) << (Pipeline() >> 
-            PipelineStep('model space', ModelSpace(model_list)) >>
-            PipelineStep('cv', CV('accuracy')) >>
-            PipelineStep('choose', ChooseBest(3)))
+        LocalExecutor(data) << (Pipeline() 
+            >> ModelSpace(model_list)
+            >> CV('accuracy')
+            >> ChooseBest(3)
+        )
 
     def test_step_space_regression_model(self):
         model_list = [
@@ -66,10 +68,11 @@ class IntegrationTests(unittest.TestCase):
         ]
 
         data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
-        LocalExecutor(data) << (Pipeline() >> 
-            PipelineStep('model space', ModelSpace(model_list)) >>
-            PipelineStep('cv', Validate(test_size=0.33, metrics=mean_absolute_error)) >>
-            PipelineStep('choose', ChooseBest(3)))
+        LocalExecutor(data) << (Pipeline()
+            >> ModelSpace(model_list)
+            >> Validate(test_size=0.33, metrics=mean_absolute_error)
+            >> ChooseBest(3)
+        )
 
     def test_all_step(self):
         model_list = [
@@ -81,12 +84,13 @@ class IntegrationTests(unittest.TestCase):
         ]
 
         data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
-        context, pipeline_data = LocalExecutor(data, 10) << (Pipeline() >> 
-            PipelineStep('model space', ModelSpace(model_list)) >>
-            PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*'])) >>
-            PipelineStep('cv', Validate(test_size=0.33, metrics=mean_squared_error)) >>
-            PipelineStep('choose', ChooseBest(1, by_largest_score=False)) >>
-            PipelineStep('selection', FeatureSelector(20)))
+        context, pipeline_data = LocalExecutor(data, 10) << (Pipeline() 
+            >> ModelSpace(model_list)
+            >> FormulaFeatureGenerator(['+', '-', '*'])
+            >> Validate(test_size=0.33, metrics=mean_squared_error)
+            >> ChooseBest(1, by_largest_score=False)
+            >> FeatureSelector(20)
+        )
 
         print('0'*30)
         for result in pipeline_data.return_val:
@@ -104,21 +108,20 @@ class IntegrationTests(unittest.TestCase):
             flip_y=0.05)
         model_list = [
             (RandomForestClassifier, random_forest_hp_space()),
-                (GradientBoostingClassifier, grad_boosting_hp_space()),
+            (GradientBoostingClassifier, grad_boosting_hp_space()),
             (SVC, svc_kernel_hp_space('rbf')),
             (KNeighborsClassifier, knn_hp_space()),
             (XGBClassifier, xgboost_hp_space())
         ]
 
         data = Dataset(x, y)
-        context, pipeline_data = LocalExecutor(data, 2) << (Pipeline() >> 
-            PipelineStep('model space', ModelSpace(model_list), initializer=True) >>
-            PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*'])) >>
-            PipelineStep('H', Hyperopt(Validate(test_size=0.1, metrics=roc_auc_score), 
-                                                max_evals=2)) >>
-            PipelineStep('choose', ChooseBest(1)) 
-            >> PipelineStep('selection', FeatureSelector(10))
-            )
+        context, pipeline_data = LocalExecutor(data, 2) << (Pipeline()
+            >> PipelineStep('model space', ModelSpace(model_list), initializer=True)
+            >> FormulaFeatureGenerator(['+', '-', '*'])
+            >> Hyperopt(Validate(test_size=0.1, metrics=roc_auc_score), max_evals=2)
+            >> ChooseBest(1)
+            >> FeatureSelector(10)
+        )
 
         print('0'*30)
         for result in pipeline_data.return_val:
@@ -183,12 +186,12 @@ class IntegrationTests(unittest.TestCase):
         n_features_to_select = random.randint(5, 30)
 
         data = Dataset(x, y)
-        context, pipeline_data = LocalExecutor(data, 2) << (Pipeline() >> 
-            PipelineStep('model space', ModelSpace(model_list), initializer=True) >>
-            PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*', '/'])) >>
-            PipelineStep('Validate', Validate(test_size=0.1, metrics=roc_auc_score)) >>
-            PipelineStep('choose', ChooseBest(1)) >>
-            PipelineStep('selection', RecursiveFeatureSelector(n_features_to_select=n_features_to_select))
+        context, pipeline_data = LocalExecutor(data, 2) << (Pipeline()
+            >> PipelineStep('model space', ModelSpace(model_list), initializer=True)
+            >> FormulaFeatureGenerator(['+', '-', '*', '/']) 
+            >> Validate(test_size=0.1, metrics=roc_auc_score)
+            >> ChooseBest(1) 
+            >> RecursiveFeatureSelector(n_features_to_select=n_features_to_select)
         )
 
         preprocessing = Preprocessing()
@@ -197,35 +200,28 @@ class IntegrationTests(unittest.TestCase):
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
 
     def test_correlated_feature_generator(self):
-        x, y = make_classification(
-            n_samples=100,
-            n_features=40,
-            n_informative=2,
-            n_redundant=10,
-            flip_y=0.05
-        )
-
+        
         model_list = [
-            (RandomForestClassifier, {}),
-            (GradientBoostingClassifier, {}),
-            (SVC, {}),
-            (KNeighborsClassifier, {}),
-            (XGBClassifier, {})
+            (RandomForestRegressor, {}),
+            (GradientBoostingRegressor, {}),
+            (SVR, {}),
+            (XGBRegressor, {})
         ]
 
         n_features_to_select = random.randint(5, 30)
 
-        data = Dataset(x, y)
-        context, pipeline_data = LocalExecutor(data, 2) << (Pipeline() >> 
-            PipelineStep('model space', ModelSpace(model_list), initializer=True) >>
-            PipelineStep('feature generation', FormulaFeatureGenerator(['+', '-', '*', '/'], limit=10)) >>
-            PipelineStep('Validate', Validate(test_size=0.1, metrics=roc_auc_score)) >>
-            PipelineStep('choose', ChooseBest(1)) >>
-            PipelineStep('selection', RecursiveFeatureSelector(n_features_to_select=n_features_to_select)) >>
-            CorrelatedFeatureSelector(max_correlation = 0.7)
+        data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
+        context, pipeline_data = LocalExecutor(data, 5) << (Pipeline()  
+            >> PipelineStep('model space', ModelSpace(model_list), initializer=True) 
+            >> FormulaFeatureGenerator(['+', '-', '*', '/'], limit=10) 
+            >> Validate(test_size=0.1, metrics=mean_absolute_error) 
+            >> ChooseBest(1, by_largest_score=False) 
+            >> RecursiveFeatureSelector(n_features_to_select=n_features_to_select) 
+            >> CorrelatedFeatureSelector(max_correlation = 0.9)
         )
 
         preprocessing = Preprocessing()
-        final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(x, y))
+        final_data = preprocessing.reproduce(pipeline_data.dataset,
+                                             Dataset(datasets.load_boston().data, datasets.load_boston().target))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
