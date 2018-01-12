@@ -29,6 +29,10 @@ ext = [
     Extension('automl.*', ['automl/*.py']),
     Extension('automl.data.*', ['automl/data/*.py']),
     Extension('automl.feature.*', ['automl/feature/*.py']),
+    Extension('automl.hyperparam.optimization',
+              ['automl/hyperparam/optimization.py']),
+    Extension('automl.hyperparam.templates',
+              ['automl/hyperparam/templates.py']),
     Extension('automl.hyperparam.*', ['automl/hyperparam/*.py'])
 ]
 

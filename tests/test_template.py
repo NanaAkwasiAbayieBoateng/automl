@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn import datasets
 from sklearn.metrics import mean_absolute_error
 
-from automl.hyperparam.hyperopt import Hyperopt
+from automl.hyperparam.optimization import Hyperopt
 from automl.hyperparam.templates import random_forest_hp_space
 from automl.pipeline import PipelineStep, LocalExecutor, Pipeline
 from automl.model import Validate, ModelSpace

@@ -5,7 +5,7 @@ import hyperopt
 
 from automl.data.dataset import Dataset
 from automl.hyperparam.templates import random_forest_hp_space, xgboost_hp_space
-from automl.hyperparam.hyperopt import Hyperopt, HyperparameterSearchResult
+from automl.hyperparam.optimization import Hyperopt, HyperparameterSearchResult
 from automl.model import CV, ModelSpace
 from automl.pipeline import LocalExecutor, Pipeline
 from sklearn.datasets import make_classification

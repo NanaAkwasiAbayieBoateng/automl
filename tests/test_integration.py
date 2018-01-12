@@ -6,7 +6,7 @@ from automl.data.dataset import Dataset
 from automl.model import ModelSpace, Validate, CV, ChooseBest
 from automl.feature.selector import FeatureSelector, VotingFeatureSelector, RecursiveFeatureSelector
 from automl.feature.generators import FormulaFeatureGenerator, Preprocessing
-from automl.hyperparam.hyperopt import Hyperopt
+from automl.hyperparam.optimization import Hyperopt
 from automl.hyperparam.templates import random_forest_hp_space, knn_hp_space, svc_kernel_hp_space, grad_boosting_hp_space, xgboost_hp_space
 
 from sklearn import datasets
