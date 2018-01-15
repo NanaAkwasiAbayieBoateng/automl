@@ -257,20 +257,33 @@ class CorrelatedFeatureSelector:
         self.max_correlation = max_correlation
 
     def __call__(self, pipeline_data, context):
+        data = pipeline_data.dataset.data
+        meta = pipeline_data.dataset.meta
+        orig_feature_num = data.shape[1]
+        
+        
+        correlation_matrix = np.corrcoef(data.T)
+        matrix_mask = np.absolute(correlation_matrix) > self.max_correlation
+        pairs_of_indices = np.array(np.nonzero(matrix_mask)).T
         candidates = []
-        for correlating_features in np.array(np.nonzero(np.absolute(np.corrcoef(pipeline_data.dataset.data.T)) > self.max_correlation)).T:
-            if correlating_features[0]!=correlating_features[1]:
-                candidates.append(tuple(sorted(correlating_features)))  #collect all pairs of feature indices which feature correlation bigger than max correlation parameter without pairs received by correlation with itself 
+        for pair in pairs_of_indices:
+            if pair[0]!=pair[1]:
+                candidates.append(tuple(sorted(pair)))  #collect all pairs of feature indices which feature correlation bigger than max correlation parameter without pairs received by correlation with itself 
         candidates = list(set(candidates)) #delete pairs received by permutation of indices
-        mask = [i not in set([couple[0] for couple in candidates]) for i in range(0, pipeline_data.dataset.data.shape[1])]#list of booleans. True if feature is not deleted by generator
+
+        indices_to_delete = set([pair[0] for pair in candidates])
+        mask = [i not in indices_to_delete for i in range(0, orig_feature_num)]#list of booleans. True if feature is not deleted by generator
         
-        pipeline_data.dataset.data = pipeline_data.dataset.data.compress(mask, axis=1)
+        pipeline_data.dataset.data = data.compress(mask, axis=1)
         
-        meta = []
-        informative_features = zip(pipeline_data.dataset.meta, mask) 
+        new_meta = []
+        informative_features = zip(meta, mask) 
         for feature, informative in informative_features:
             if informative:
-                meta.append(feature)
-        pipeline_data.dataset.meta = meta
+                new_meta.append(feature)
+        new_meta = [feature for feature, informative in zip(meta, mask)
+                    if informative]
+        
+        pipeline_data.dataset.meta = new_meta
         
         return PipelineData(pipeline_data.dataset, pipeline_data.return_val)
