@@ -25,7 +25,7 @@ class Dataset:
                                   "history": Atom(i)})
 
         else:
-            self.meta = [{"name": "base_feature",
+            self.meta = [{"name": f"base_feature_{i}",
                           "history": Atom(i)} for i in range(0, data.shape[1])]
 
         if not isinstance(data, np.ndarray):
