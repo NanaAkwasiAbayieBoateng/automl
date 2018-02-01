@@ -95,3 +95,31 @@ class TestSklearnFeatureGenerator(unittest.TestCase):
         final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(X, y))
         self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
         self.assertTrue((final_data == pipeline_data.dataset.data).all())
+    
+    def test_max_depth(self):
+        model_list = [
+            (Lasso, {}),
+            (Ridge, {}),
+            (RandomForestRegressor, {})
+        ]
+
+        max_depth = 2
+        addition = 0.25
+        epochs = 20
+
+        data = Dataset(datasets.load_boston().data, datasets.load_boston().target)
+        context, pipeline_data = LocalExecutor(data, epochs) << (Pipeline() 
+            >> ModelSpace(model_list) 
+            >> FormulaFeatureGenerator(['+', '-', '*', '/'], max_depth=max_depth, addition=addition) 
+            >> Validate(test_size=0.33, metrics=mean_squared_error) 
+            >> ChooseBest(1) 
+            >> FeatureSelector(30))
+
+        depths = [feature["depth"] for feature in pipeline_data.dataset.meta]
+
+        preprocessing = Preprocessing()
+        final_data = preprocessing.reproduce(pipeline_data.dataset, Dataset(datasets.load_boston().data, datasets.load_boston().target))
+        self.assertEqual(pipeline_data.dataset.data.shape, final_data.shape)
+        self.assertTrue((final_data == pipeline_data.dataset.data).all())
+        self.assertLessEqual(max(depths), max_depth+addition*epochs)
+    

@@ -143,7 +143,7 @@ class FormulaFeatureGenerator:
     used_func : set of of symbols of functions
     """
 
-    def __init__(self, func_list=['+', '-', '*', '/'], limit=1):
+    def __init__(self, func_list=['+', '-', '*', '/'], limit=1, max_depth=4, addition=0.25):
         self._log = logging.getLogger(self.__class__.__name__)
         self.used_func = set(func_list)
         self._func_map = {
@@ -153,6 +153,8 @@ class FormulaFeatureGenerator:
             '*': self._multiply,
         }
         self._limit = limit
+        self.max_depth = max_depth
+        self.addition = addition
 
     def _execution(self, dataset, operator):
         X = dataset.data
@@ -161,7 +163,8 @@ class FormulaFeatureGenerator:
             X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
         history = operator(dataset.meta[first_index]['history'], dataset.meta[second_index]['history'])
         name = f"({dataset.meta[first_index]['name']}_{operator.__name__}_{dataset.meta[second_index]['name']})"
-        return operator(x, y), history, name
+        depth = dataset.meta[first_index]['depth'] + dataset.meta[first_index]['depth']
+        return operator(x, y), history, name, depth
 
     def _sum(self, dataset):
         """ Generate one new feature by sum of two random features
@@ -276,18 +279,20 @@ class FormulaFeatureGenerator:
         orig_feature_num = pipeline_data.dataset.data.shape[1]
 
         for _ in range(0, self._limit):
-            new_feature, history, name = self._func_map[random.sample(self.used_func, 1)[0]](pipeline_data.dataset)
-            if np.isfinite(new_feature).all():
+            new_feature, history, name, depth = self._func_map[random.sample(self.used_func, 1)[0]](pipeline_data.dataset)
+            if np.isfinite(new_feature).all() and depth < self.max_depth:
                 pipeline_data.dataset.data = np.append(pipeline_data.dataset.data, new_feature, axis=1)
 
                 pipeline_data.dataset.meta.append({
                     "name": name,
-                    "history": history
+                    "history": history,
+                    "depth": depth
                 })
 
         self._log.info((f"Generated new features. Old feature number - "
                         f"{orig_feature_num}, new feature number - "
                         f"{pipeline_data.dataset.data.shape[1]}"))
+        self.max_depth = self.max_depth + self.addition
         return pipeline_data 
 
 class Preprocessing:

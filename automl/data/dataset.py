@@ -22,11 +22,13 @@ class Dataset:
             self.meta = []
             for i, col in enumerate(data.columns):
                 self.meta.append({"name": col,
-                                  "history": Atom(i)})
+                                  "history": Atom(i),
+                                  "depth": 1})
 
         else:
             self.meta = [{"name": f"base_feature_{i}",
-                          "history": Atom(i)} for i in range(0, data.shape[1])]
+                          "history": Atom(i),
+                          "depth": 1} for i in range(0, data.shape[1])]
 
         if not isinstance(data, np.ndarray):
             data = np.array(data, dtype='float32')
