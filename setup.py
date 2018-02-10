@@ -1,15 +1,15 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
-setup(name='automl',
-      version='0.1a',
+setup(name='cmx_automl',
+      version='0.1.1a',
       description='Automated Machine Learning Framework',
       author='Kirill Dubovikov, Igor Fokin',
       author_email='dubovikov.kirill@gmail.com',
-      packages=['automl'],
+      packages=find_packages(),
       install_requires=[
           'numpy>=1.13.3',
           'pandas>=0.20.3',
-          'scikit-learn>=0.19.1',
+          'scikit-learn>=0.19.0',
           'tqdm',
           'hyperopt>=0.1',
           'networkx==1.11'

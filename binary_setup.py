@@ -48,7 +48,7 @@ setup(name='onepanel-automl',
       install_requires=[
           'numpy>=1.13.3',
           'pandas>=0.20.3',
-          'scikit-learn>=0.19.1',
+          'scikit-learn>=0.19.0',
           'tqdm',
           'hyperopt>=0.1',
           'networkx==1.11'

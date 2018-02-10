@@ -130,6 +130,7 @@ class LocalExecutor:
             self._log.info(f"Starting AutoML Epoch #{epoch_n + 1}")
 
             pipeline_data = input_data
+            self._log.info(f"Dataset columns: {pipeline_data.dataset.columns}")
             for step in tqdm(pipeline.steps):
                 self._log.info(f"Running step '{step.name}'")
                 if step.is_model_space_functor():
