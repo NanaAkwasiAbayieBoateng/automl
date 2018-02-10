@@ -1,3 +1,4 @@
+"""Dataset loading from external sources"""
 import logging
 from urllib.parse import urlparse
 
@@ -12,7 +13,7 @@ class DatasetLoader:
     def __init__(self, **kwargs):
         self._log = logging.getLogger(self.__class__.__name__)
         self._loader_map = {
-                'csv': self._load_csv
+            'csv': self._load_csv
         }
         self._loader_args = kwargs
 
@@ -44,7 +45,7 @@ class DatasetLoader:
             raise ValueError(f"{uri.scheme} is not supported")
 
         return PipelineData(self._loader_map[uri.scheme](uri.path, **self._loader_args))
-    
+
     def _load_csv(self, csv_path, **kwargs):
         return pd.read_csv(csv_path, **self._loader_args)
 

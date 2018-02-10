@@ -1,3 +1,5 @@
+"""Hyperopt templates for different models"""
+
 # forked from hyperopt/hyperopt-sklearn
 
 from functools import partial
@@ -790,5 +792,19 @@ def colkmeans_hp_space(n_clusters=None,
     )
     return rval
 
+def lgbm_hp_space(**kwargs):
+    space = {
+        'n_estimators': scope.int(hp.quniform('n_estimators', 10, 700, 1)),
+        'num_leaves': scope.int(hp.quniform ('num_leaves', 10, 200, 1)),
+        'feature_fraction': hp.uniform('feature_fraction', 0.75, 1.0),
+        'bagging_fraction': hp.uniform('bagging_fraction', 0.75, 1.0),
+        'learning_rate': hp.loguniform('learning_rate', -5.0, -2.3),
+        'max_bin': scope.int(hp.quniform('max_bin', 64, 512, 1)),
+        'bagging_freq': scope.int(hp.quniform('bagging_freq', 1, 5, 1)),
+        'lambda_l1': hp.uniform('lambda_l1', 0, 10),
+        'lambda_l2': hp.uniform('lambda_l2', 0, 10),
+        **kwargs
+       }
 
+    return space
 # -- flake8 eofk

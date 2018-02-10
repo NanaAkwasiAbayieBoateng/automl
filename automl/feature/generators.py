@@ -1,23 +1,102 @@
+"""Pipeline steps for feature generation"""
+
 import logging
+import itertools as it
 from functools import partial
 import random
 import numpy as np
+import operator
 from sklearn.preprocessing import PolynomialFeatures
-from automl.pipeline import PipelineData
 
+from automl.expression import Atom
+    
 
+class PolynomialFeatureGenerator:
+    """Generate polynomial and interaction features for dataset in PipelineData
+
+    Generate a new feature matrix from current matrix in pipeline
+    consisting of all polynomial combinations of the features with
+    degree less than or equal to the specified degree. For example,
+    if an input sample is two dimensional and of the form [a, b],
+    the degree-2 polynomial features are [1, a, b, a^2, ab, b^2].
+
+    Parameters
+    ----------
+    max_degree : integer
+        The maximum degree of the polynomial features. Default = 2.
+
+    Notes
+    -----
+    Be aware that the number of features in the output array scales
+    polynomially in the number of features of the input array, and
+    exponentially in the degree. High degrees can cause overfitting.
+    """
+    def __init__(self, max_degree):
+        self._log = logging.getLogger(self.__class__.__name__)
+        self.max_degree = max_degree
+
+    def __call__(self, pipeline_data, pipeline_context):
+        """
+        Parametrs
+        ---------
+        pipeline_data : PipelineData
+            Data passed between PipelineStep in pipeline
+
+        context : PiplineContext
+            Global context of pipeline
+
+        Returns
+        -------
+        PipelineData
+            PipelineData containing changed PipelineData.dataset
+        """
+        data = pipeline_data.dataset.data
+        meta = pipeline_data.dataset.meta
+        orig_feature_num = pipeline_data.dataset.data.shape[1]
+
+        for degree in range(1, self.max_degree+1):
+            # TODO this is unreadable, unwrap
+            sets_of_indices = list(set(tuple(sorted(indices)) for indices in it.product(range(0, orig_feature_num), repeat=degree)))
+
+            for indices in sets_of_indices:
+                new_feature = np.ones((data.shape[0], 1), dtype='float32')
+                history = Atom(0) / Atom(0) #init one as expression
+
+                for index in indices:
+                    new_feature = np.reshape(
+                        data[:, index],
+                        (data.shape[0], 1)
+                    ) * new_feature
+                    history = meta[index]['history'] * history
+                if np.isfinite(new_feature).all():
+                    data = np.append(data, new_feature, axis=1)
+                    meta.append({
+                        "name": "",
+                        "history": history 
+                    })
+                else:
+                    pass
+
+        pipeline_data.dataset.data = data
+        pipeline_data.dataset.meta = meta
+        return pipeline_data
 
 
 class SklearnFeatureGenerator:
-    def __init__(self, transformer_class, *args, **kwargs):
-        """
-        Wrapper for Scikit-Learn Transformers
+    """ Wrapper for Scikit-Learn Transformers (only for
+    sklearn.preprocessing.PolynomialFeatures at this release)
 
-        Parameters
-        ----------
-        kwargs:
-            keyword arguments are passed to sklearn PolynomialFeatures
-        """
+    Parameters
+    ----------
+    transformer_class: sklearn.preprocessing.PolynomialFeatures
+
+    args:
+        arguments are passed to sklearn PolynomialFeatures
+
+    kwargs:
+        keyword arguments are passed to sklearn PolynomialFeatures
+    """
+    def __init__(self, transformer_class, *args, **kwargs):
         self._log = logging.getLogger(self.__class__.__name__)
         self._transformer = transformer_class(*args, **kwargs)
 
@@ -25,16 +104,16 @@ class SklearnFeatureGenerator:
         """
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            The data.
+        pipeline_data : PipelineData
+            Data passed between PipelineStep in pipeline
 
         pipeline_context: automl.pipeline.PipelineContext
             global context of a pipeline
 
         Returns
         -------
-        X_new : numpy array of shape [n_samples, n_features_new]
-            Transformed array.
+        PipelineData
+            PipelineData containing changed PipelineData.dataset
         """
 
         pipeline_data.dataset.data = self._transformer.fit_transform(pipeline_data.dataset.data)
@@ -42,22 +121,29 @@ class SklearnFeatureGenerator:
 
 
 class FormulaFeatureGenerator:
-    def __init__(self, func_list=['+', '-', '*', '/']):
-        """
-        Initialize Formula Feature Generator
+    """ Generate features for dataset in PipelineData by formula
 
-        Paramets
-        --------
-        func_list : list of symbols of functions
-            In current version func_list may contain only '+', '-', '*', '/'.
+    Generate a new feature matrix from current matrix in pipeline
+    consisting of old features and new features generated from operations
+    over old features
 
-        Attributes
-        ----------
-        _func_map : dict of generating functions
-            The function for generation new features
+    Paramets
+    --------
+    func_list : list of symbols of functions
+        In current version func_list may contain only '+', '-', '*', '/'.
 
-        used_func : set of of symbols of functions
-        """
+    limit: int
+        Total number of expression members
+
+    Attributes
+    ----------
+    _func_map : dict of generating functions
+        The function for generation new features
+
+    used_func : set of of symbols of functions
+    """
+
+    def __init__(self, func_list=['+', '-', '*', '/'], limit=1, max_depth=4, addition=0.25):
         self._log = logging.getLogger(self.__class__.__name__)
         self.used_func = set(func_list)
         self._func_map = {
@@ -66,90 +152,95 @@ class FormulaFeatureGenerator:
             '/': self._divide,
             '*': self._multiply,
         }
+        self._limit = limit
+        self.max_depth = max_depth
+        self.addition = addition
+
+    def _execution(self, dataset, operator):
+        X = dataset.data
+        first_index, second_index = self._choose_two_index(X)
+        x, y = X[:, first_index].reshape(
+            X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
+        history = operator(dataset.meta[first_index]['history'], dataset.meta[second_index]['history'])
+        name = f"({dataset.meta[first_index]['name']}_{operator.__name__}_{dataset.meta[second_index]['name']})"
+        depth = dataset.meta[first_index]['depth'] + dataset.meta[first_index]['depth']
+        return operator(x, y), history, name, depth
 
     def _sum(self, dataset):
-        """
-        Add one new feature generated by sum of two random features
+        """ Generate one new feature by sum of two random features
 
         Parametrs
         ---------
-        X : np.ndarray, shape [n_samples, n_features]
-            The data to transform, row by row.
+        dataset : Dataset
+            Dataset.data contains data to transform
 
         Returns
         -------
-        XF : np.ndarray shape [n_samples, n_features+1]
-            The matrix of features with one new feature
+        np.ndarray shape [n_sample, 1]
+            new feature
+
+        history : str
+            the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}+{dataset.meta[second_index]['history']})"
-        return x + y, history
-    
+        
+        return self._execution(dataset, operator.__add__)
+
     def _substract(self, dataset):
-        """
-        Add one new feature generated by substraction of two random features
+        """Generate one new feature by substraction of two random features
 
         Parametrs
         ---------
-        X : np.ndarray, shape [n_samples, n_features]
-            The data to transform, row by row.
+        dataset : Dataset
+            Dataset.data contains data to transform
 
         Returns
         -------
-        XF : np.ndarray shape [n_samples, n_features+1]
-            The matrix of features with one new feature
+        np.ndarray shape [n_sample, 1]
+            new feature
+
+        history : str
+            the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}-{dataset.meta[second_index]['history']})"
-        return x - y, history
+        return self._execution(dataset, operator.__sub__)
 
     def _divide(self, dataset):
-        """
-        Add one new feature generated by division of two random features
+        """ Generate one new feature by division of two random features
 
         Parametrs
         ---------
-        X : np.ndarray, shape [n_samples, n_features]
-            The data to transform, row by row.
-
+        dataset : Dataset
+            Dataset.data contains data to transform
+            
         Returns
         -------
-        XF : np.ndarray shape [n_samples, n_features+1]
-            The matrix of features with one new feature
+        np.ndarray shape [n_sample, 1]
+            new feature
+
+        history : str
+            the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}/{dataset.meta[second_index]['history']})"
-        return x / y, history
+        return self._execution(dataset, operator.__truediv__)
 
     def _multiply(self, dataset):
-        """
-        Add one new feature generated by multiplication of two random features
+        """ Generate one new feature by multiplication of two random features
 
         Parametrs
         ---------
-        X : np.ndarray, shape [n_samples, n_features]
-            The data to transform, row by row.
+        dataset : Dataset
+            Dataset.data contains data to transform
 
         Returns
         -------
-        XF : np.ndarray shape [n_samples, n_features+1]
-            The matrix of features with one new feature
+        np.ndarray shape [n_sample, 1]
+            new feature
+
+        history : str
+            the history of new feature for reproducible preprocessing
         """
-        X = dataset.data
-        first_index, second_index = self._choose_two_index(X)
-        x, y = X[:, first_index].reshape(X.shape[0], 1), X[:, second_index].reshape(X.shape[0], 1)
-        history = f"({dataset.meta[first_index]['history']}*{dataset.meta[second_index]['history']})"
-        return x * y, history
+        return self._execution(dataset, operator.__mul__)
 
     def _choose_two_index(self, X):
-        """
-        Choose two features from input data
+        """ Choose two index input data
 
         Parametrs
         ---------
@@ -158,61 +249,83 @@ class FormulaFeatureGenerator:
 
         Returns
         -------
-        x, y : Two vectors of selected features
+        int: 
+            Index
+
+        int:
+            Index 
         """
         return random.randint(0, X.shape[1]-1),\
                random.randint(0, X.shape[1]-1)
 
-    def __call__(self, pipeline_data, pipeline_context, limit=10):
+    def __call__(self, pipeline_data, pipeline_context):
         """
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            The data.
+        pipeline_data : automl.pipeline.PipelineData
+            Data passed between PipelineStep in pipeline
+
+        pipeline_context : automl.pipeline.PipelineContext
+            global context of a pipeline
 
         limit : int
-            Amount of new features
-
-        pipeline_context: automl.pipeline.PipelineContext
-            global context of a pipeline
+            Maximum amount of new features. Default = 10
 
         Returns
         -------
-        XF : numpy array of shape [n_samples, n_features+limit]
-            Transformed array.
+        PipelineData
+            PipelineData containing changed PipelineData.dataset
         """
         orig_feature_num = pipeline_data.dataset.data.shape[1]
-        if not isinstance(pipeline_data.dataset, np.ndarray):
-            pipeline_data.dataset.data = np.array(pipeline_data.dataset.data)
 
-        for _ in range(0, limit):
-            new_feature, history = self._func_map[random.sample(self.used_func, 1)[0]](pipeline_data.dataset)
-            if np.isfinite(new_feature).all():
+        for _ in range(0, self._limit):
+            new_feature, history, name, depth = self._func_map[random.sample(self.used_func, 1)[0]](pipeline_data.dataset)
+            if np.isfinite(new_feature).all() and depth < self.max_depth:
                 pipeline_data.dataset.data = np.append(pipeline_data.dataset.data, new_feature, axis=1)
 
                 pipeline_data.dataset.meta.append({
-                    "name" : "",
-                    "history" : history
+                    "name": name,
+                    "history": history,
+                    "depth": depth
                 })
 
         self._log.info((f"Generated new features. Old feature number - "
                         f"{orig_feature_num}, new feature number - "
                         f"{pipeline_data.dataset.data.shape[1]}"))
+        self.max_depth = self.max_depth + self.addition
         return pipeline_data 
 
-class RecoveringFeatureGenerator:
+class Preprocessing:
+    """ Reproduce all feature transformations that were creating during the
+    execution of AutoML pipeline
+    """
+
     def __init__(self):
         self._log = logging.getLogger(self.__class__.__name__)
 
-    def __call__(self, pipeline_data, pipeline_context):
-        dataset = pipeline_data.dataset
-        data = dataset.data
-        for feature in dataset.meta:
-            if feature["name"] != "base_feature": 
-                explicit_locals = locals()
-                exec(f"new_feature = {feature['history']}", globals(), explicit_locals)
-                new_feature = explicit_locals["new_feature"]
-                np.append(data, new_feature)
-        return pipeline_data
+    def reproduce(self, resulting_dataset, original_dataset):
+        """ Parameters
+        ----------
+        resulting_dataset : Dataset
+            Resulting dataset
+
+        original_dataset : Dataset
+            Initial dataset that was passed to executor
+            
+        Returns
+        -------
+        np.ndarray
+            Dataset that was generated by executor
+        """
+        data = original_dataset.data.astype("float32")
+        final_data = np.ones((data.shape[0], 1), dtype='float32')
+        for feature in resulting_dataset.meta:
+            new_feature = feature['history'].eval(data)
+            new_feature = np.reshape(
+                new_feature,
+                (data.shape[0], 1)
+            )
+            final_data = np.append(final_data, new_feature, axis=1) 
+        return np.delete(final_data.astype('float32'), 0, 1)
 
 PolynomialGenerator = partial(SklearnFeatureGenerator, PolynomialFeatures)
