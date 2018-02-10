@@ -37,7 +37,7 @@ ext = [
 ]
 
 setup(name='onepanel-automl',
-      version='0.1.2',
+      version='0.1.3',
       description='Automated Machine Learning Framework',
       author='Kirill Dubovikov, Igor Fokin',
       author_email='sales@onepanel.io',

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='cmx_automl',
-      version='0.1.1a',
+      version='0.1.3',
       description='Automated Machine Learning Framework',
       author='Kirill Dubovikov, Igor Fokin',
       author_email='dubovikov.kirill@gmail.com',
