@@ -1,5 +1,6 @@
 import logging
 from tqdm import tqdm
+from automl.constants import *
 
 
 class PipelineContext:
@@ -122,6 +123,11 @@ class LocalExecutor:
         -------
         result
             result of a given pipeline"""
+        
+        print(AUTOML_HEADER)
+
+        self._log.info(f"Framework version: v{AUTOML_VERSION}")
+
         if not isinstance(input_data, PipelineData):
             input_data = PipelineData(input_data)
 
@@ -130,7 +136,9 @@ class LocalExecutor:
             self._log.info(f"Starting AutoML Epoch #{epoch_n + 1}")
 
             pipeline_data = input_data
-            self._log.info(f"Dataset columns: {pipeline_data.dataset.columns}")
+
+            if pipeline_data.dataset:
+                self._log.info(f"Dataset columns: {pipeline_data.dataset.columns}")
             for step in tqdm(pipeline.steps):
                 self._log.info(f"Running step '{step.name}'")
                 if step.is_model_space_functor():
