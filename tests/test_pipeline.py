@@ -1,6 +1,7 @@
 import unittest
 import sklearn
 import pandas as pd
+import numpy as np
 
 from automl.pipeline import PipelineStep, Pipeline, LocalExecutor, PipelineData
 from automl.combinators import RandomChoice
@@ -20,13 +21,14 @@ class TestPipeline(unittest.TestCase):
 
     def test_random_choice_combinator(self):
         for _ in range(0, 10):
+            data = Dataset(np.zeros((2, 2)), np.zeros((2, 2)))
             result = LocalExecutor() << (Pipeline() >> RandomChoice([
-                PipelineStep('a', lambda x, context: PipelineData(1)),
-                PipelineStep('b', lambda x, context: PipelineData(2))
+                PipelineStep('a', lambda x, context: 'a'),
+                PipelineStep('b', lambda x, context: 'b')
                 ]))
 
             print(result)
-            self.assertIn(result[1].dataset, [1, 2])
+            self.assertIn(result[1], ['a', 'b'])
 
     def test_pipeline(self):
         df = pd.DataFrame([[1, 2], [3, 4]])

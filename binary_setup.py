@@ -3,6 +3,7 @@ from setuptools.extension import Extension
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 from pathlib import Path
+from automl.constants import *
 import shutil
 
 class MyBuildExt(build_ext):
@@ -37,7 +38,7 @@ ext = [
 ]
 
 setup(name='onepanel-automl',
-      version='0.1.3',
+      version=AUTOML_VERSION,
       description='Automated Machine Learning Framework',
       author='Kirill Dubovikov, Igor Fokin',
       author_email='sales@onepanel.io',

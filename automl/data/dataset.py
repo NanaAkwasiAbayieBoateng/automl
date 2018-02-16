@@ -26,9 +26,13 @@ class Dataset:
                                   "depth": 1})
 
         else:
-            self.meta = [{"name": f"base_feature_{i}",
-                          "history": Atom(i),
-                          "depth": 1} for i in range(0, data.shape[1])]
+            try:
+                self.meta = [{"name": f"base_feature_{i}",
+                              "history": Atom(i),
+                              "depth": 1} for i in range(0, data.shape[1])]
+            except Exception:
+                raise ValueError("Can't construct dataset. Please use two dimensinal numpy arrays or pandas dataframes")
+
 
         if not isinstance(data, np.ndarray):
             data = np.array(data, dtype='float32')
