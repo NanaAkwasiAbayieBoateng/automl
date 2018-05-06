@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 from automl.constants import *
 
-setup(name='cmx_automl',
+setup(name='onepanel-automl',
       version=AUTOML_VERSION,
       description='Automated Machine Learning Framework',
-      author='Kirill Dubovikov, Igor Fokin',
-      author_email='dubovikov.kirill@gmail.com',
+      author='Onepanel, Inc.',
+      author_email='info@onepanel.io',
       packages=find_packages(),
       install_requires=[
           'numpy>=1.13.3',
@@ -20,4 +20,4 @@ setup(name='cmx_automl',
                    'Development Status :: 3 - Alpha',
                    'Intended Audience :: Developers',
                    'Operating System :: POSIX :: Linux',
-                   'Programming Language :: Python :: 3.6'],)
+                   'Programming Language :: Python :: 3.6'])
