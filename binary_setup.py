@@ -40,7 +40,7 @@ ext = [
 setup(name='onepanel-automl',
       version=AUTOML_VERSION,
       description='Automated Machine Learning Framework',
-      author='Kirill Dubovikov, Igor Fokin',
+      author='Onepanel, Inc.',
       author_email='sales@onepanel.io',
       packages=[],
       cmdclass=dict(build_ext=MyBuildExt),
@@ -59,4 +59,4 @@ setup(name='onepanel-automl',
                    'Development Status :: 3 - Alpha',
                    'Intended Audience :: Developers',
                    'Operating System :: POSIX :: Linux',
-                  'Programming Language :: Python :: 3.6'])
+                   'Programming Language :: Python :: 3.6'])
