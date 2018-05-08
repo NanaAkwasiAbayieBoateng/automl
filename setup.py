@@ -11,7 +11,7 @@ setup(name='onepanel-automl',
           'https://github.com/hyperopt/hyperopt'
          ],
       install_requires=[
-          'numpy>=1.14.3',
+          'numpy==1.13.3',
           'pandas>=0.22.0',
           'scikit-learn>=0.19.1',
           'tqdm',
