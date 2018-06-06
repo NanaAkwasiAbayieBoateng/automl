@@ -3,8 +3,8 @@ import operator
 import logging
 import numpy as np
 
-from sklearn.cross_validation import cross_val_score
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
 
 from automl.pipeline import ModelSpaceFunctor, PipelineData
 

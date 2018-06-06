@@ -7,13 +7,15 @@ setup(name='onepanel-automl',
       author='Onepanel, Inc.',
       author_email='info@onepanel.io',
       packages=find_packages(),
+      dependency_links=[
+          'https://github.com/hyperopt/hyperopt'
+         ],
       install_requires=[
-          'numpy>=1.13.3',
-          'pandas>=0.20.3',
-          'scikit-learn>=0.19.0',
+          'numpy==1.13.3',
+          'pandas>=0.22.0',
+          'scikit-learn>=0.19.1',
           'tqdm',
-          'hyperopt>=0.1',
-          'networkx==1.11'
+          'networkx>=2.0'
           ],
       license='License :: Other/Proprietary License',
       classifiers=['Topic :: Scientific/Engineering :: Artificial Intelligence',

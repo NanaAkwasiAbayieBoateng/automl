@@ -11,3 +11,4 @@ __cache__
 *.c
 build
 dist
+.DS_Store
