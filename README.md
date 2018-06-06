@@ -1,4 +1,4 @@
-# Onepanel AutoML
+# Onepanel AutoML v0.1.5
 
 Onepanel's AutoML framework was built to improve the accuracy of your machine learning models and make them more accessible by automatically creating a data analysis pipeline that can include data pre-processing, feature selection, and feature engineering methods along with machine learning methods and parameter settings that are optimized for your data.
 
